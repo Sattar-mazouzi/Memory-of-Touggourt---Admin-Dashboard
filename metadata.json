@@ -1,0 +1,7 @@
+{
+  "name": "Memory of Touggourt - Admin Dashboard",
+  "description": "An administrative portal to manage tourism data for Touggourt, including places, categories, and AI-powered content generation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

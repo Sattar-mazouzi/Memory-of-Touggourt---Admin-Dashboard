@@ -1,15 +1,10 @@
 
 import React from 'react';
 import { 
-  Home, 
   MapPin, 
   History, 
   Palmtree, 
-  Church, 
-  Image as ImageIcon,
-  Settings,
-  LayoutDashboard,
-  Plus
+  Church
 } from 'lucide-react';
 import { CategoryType } from './types';
 
@@ -19,30 +14,11 @@ export const COLORS = {
   background: '#F8FAFC',
 };
 
-export const CATEGORY_ICONS: Record<CategoryType, React.ReactNode> = {
-  [CategoryType.RELIGIOUS]: <Church className="w-6 h-6" />,
-  [CategoryType.HISTORICAL]: <History className="w-6 h-6" />,
-  [CategoryType.CULTURAL]: <MapPin className="w-6 h-6" />,
-  [CategoryType.NATURAL]: <Palmtree className="w-6 h-6" />,
+export const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  'religion': <Church className="w-6 h-6" />,
+  'history': <History className="w-6 h-6" />,
+  'culture': <MapPin className="w-6 h-6" />,
+  'nature': <Palmtree className="w-6 h-6" />,
 };
 
-export const MOCK_PLACES: any[] = [
-  {
-    id: '1',
-    name: 'Great Mosque',
-    location: 'Touggourt Center',
-    category: CategoryType.RELIGIOUS,
-    description: 'A historical masterpiece of architecture in the heart of Touggourt.',
-    imageUrl: 'https://picsum.photos/seed/mosque/800/600',
-    featured: true,
-  },
-  {
-    id: '2',
-    name: 'Tamazert Oasis',
-    location: '43200 Touggourt',
-    category: CategoryType.NATURAL,
-    description: 'A lush green escape surrounded by the vast Sahara sands.',
-    imageUrl: 'https://picsum.photos/seed/oasis/800/600',
-    featured: true,
-  }
-];
+export const MOCK_PLACES: any[] = []; // Not used as we fetch from Firebase

@@ -8,18 +8,24 @@ import {
   LogOut 
 } from 'lucide-react';
 import { signOut, auth } from '../services/firebaseService';
+import { AppLanguage } from '../types';
+import { translations } from '../translations';
 
 interface SidebarProps {
+  currentLang: AppLanguage;
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab }) => {
+  const t = translations[currentLang];
+  const isRtl = currentLang === 'ar';
+
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'places', label: 'Places', icon: <MapPin size={20} /> },
-    { id: 'categories', label: 'Categories', icon: <Layers size={20} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
+    { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard size={20} /> },
+    { id: 'places', label: t.places, icon: <MapPin size={20} /> },
+    { id: 'categories', label: t.categories, icon: <Layers size={20} /> },
+    { id: 'settings', label: t.settings, icon: <Settings size={20} /> },
   ];
 
   const handleLogout = async () => {
@@ -31,14 +37,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   };
 
   return (
-    <div className="w-64 h-screen bg-white border-r border-slate-100 flex flex-col fixed left-0 top-0">
+    <div className={`w-64 h-screen bg-white border-${isRtl ? 'l' : 'r'} border-slate-100 flex flex-col fixed ${isRtl ? 'right-0' : 'left-0'} top-0 z-30 transition-all duration-300`}>
       <div className="p-6 flex items-center gap-3">
         <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-200">
           T
         </div>
         <div>
-          <h1 className="font-bold text-slate-800 leading-tight">Memory of Touggourt</h1>
-          <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Admin Portal</p>
+          <h1 className="font-bold text-slate-800 leading-tight">{t.appName}</h1>
+          <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{t.adminPortal}</p>
         </div>
       </div>
 
@@ -53,8 +59,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
                 : 'text-slate-500 hover:bg-slate-50'
             }`}
           >
-            {item.icon}
-            <span>{item.label}</span>
+            <div className={isRtl ? 'ml-0' : 'mr-0'}>{item.icon}</div>
+            <span className="text-sm">{item.label}</span>
           </button>
         ))}
       </nav>
@@ -65,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
           className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
         >
           <LogOut size={20} />
-          <span>Sign Out</span>
+          <span className="text-sm">{t.signOut}</span>
         </button>
       </div>
     </div>

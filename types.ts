@@ -1,22 +1,32 @@
 
+export type AppLanguage = 'ar' | 'en' | 'fr';
+
 export enum CategoryType {
-  RELIGIOUS = 'RELIGIOUS',
-  HISTORICAL = 'HISTORICAL',
-  CULTURAL = 'CULTURAL',
-  NATURAL = 'NATURAL'
+  RELIGIOUS = 'religion',
+  HISTORICAL = 'history',
+  CULTURAL = 'culture',
+  NATURAL = 'nature'
+}
+
+export interface LocalizedText {
+  ar: string;
+  en: string;
+  fr: string;
+}
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
 }
 
 export interface Place {
   id: string;
-  name: string;
-  location: string;
-  category: CategoryType;
-  description: string;
+  name: LocalizedText;
+  address: LocalizedText;
+  category: string; // Stored as lowercase string in DB
+  description: LocalizedText;
   imageUrl: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
+  location: Coordinates; // This is the coordinate map in Firestore
   featured: boolean;
   rating?: number;
 }
@@ -24,5 +34,5 @@ export interface Place {
 export interface DashboardStats {
   totalPlaces: number;
   featuredPlaces: number;
-  categoriesCount: Record<CategoryType, number>;
+  categoriesCount: Record<string, number>;
 }

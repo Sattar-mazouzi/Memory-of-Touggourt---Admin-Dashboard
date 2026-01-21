@@ -11,6 +11,7 @@ export const translations = {
     settings: "الإعدادات والملف الشخصي",
     signOut: "تسجيل الخروج",
     welcomeBack: "مرحباً بعودتك",
+    welcomeAdmin: "أهلاً بك مجدداً،",
     signInDesc: "سجل الدخول لإدارة قاعدة بيانات السياحة",
     email: "البريد الإلكتروني",
     password: "كلمة المرور",
@@ -58,7 +59,8 @@ export const translations = {
     fullName: "الاسم الكامل",
     updateProfile: "تحديث الملف الشخصي",
     saveChanges: "حفظ التغييرات",
-    profileUpdated: "تم تحديث الملف الشخصي بنجاح"
+    profileUpdated: "تم تحديث الملف الشخصي بنجاح",
+    dashboardSubtitle: "نظرة سريعة على أصول السياحة في تقرت اليوم"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -69,6 +71,7 @@ export const translations = {
     settings: "Settings & Profile",
     signOut: "Sign Out",
     welcomeBack: "Welcome Back",
+    welcomeAdmin: "Welcome back,",
     signInDesc: "Sign in to manage your tourism database",
     email: "Email Address",
     password: "Password",
@@ -116,7 +119,8 @@ export const translations = {
     fullName: "Full Name",
     updateProfile: "Update Profile",
     saveChanges: "Save Changes",
-    profileUpdated: "Profile updated successfully"
+    profileUpdated: "Profile updated successfully",
+    dashboardSubtitle: "Quick overview of Touggourt's tourism assets today"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -127,6 +131,7 @@ export const translations = {
     settings: "Paramètres & Profil",
     signOut: "Déconnexion",
     welcomeBack: "Bon Retour",
+    welcomeAdmin: "Bon retour,",
     signInDesc: "Connectez-vous pour gérer votre base de données touristique",
     email: "Adresse E-mail",
     password: "Mot de passe",
@@ -174,6 +179,7 @@ export const translations = {
     fullName: "Nom Complet",
     updateProfile: "Mettre à jour le profil",
     saveChanges: "Enregistrer les modifications",
-    profileUpdated: "Profil mis à jour avec succès"
+    profileUpdated: "Profil mis à jour avec succès",
+    dashboardSubtitle: "Aperçu rapide des actifs touristiques de Touggourt aujourd'hui"
   }
 };

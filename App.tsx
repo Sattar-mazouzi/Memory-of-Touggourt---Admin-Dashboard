@@ -50,7 +50,8 @@ import {
   Calendar,
   Layers,
   Save,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -109,6 +110,9 @@ const App: React.FC = () => {
             setUser(userData);
             setProfileFullName(userData.full_name || '');
             setIsAuthorized(true);
+            
+            // ALWAYS direct to dashboard on login
+            setActiveTab('dashboard');
           } else {
             setIsAuthorized(false);
             await signOut(auth);
@@ -340,6 +344,26 @@ const App: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Welcome Banner */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-8 rounded-[40px] text-white relative overflow-hidden shadow-2xl shadow-slate-200">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+               <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
+               
+               <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="p-2 bg-white/10 backdrop-blur rounded-xl">
+                        <Sparkles className="text-orange-400" size={24} />
+                     </div>
+                     <h3 className="text-xl md:text-2xl font-bold tracking-tight">
+                       {t.welcomeAdmin} {getDisplayName()}!
+                     </h3>
+                  </div>
+                  <p className="text-slate-300 max-w-lg leading-relaxed font-medium">
+                    {t.dashboardSubtitle}
+                  </p>
+               </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
                 { label: t.places, value: places?.length || 0, icon: <MapPin className="text-orange-500" />, trend: 'Live' },

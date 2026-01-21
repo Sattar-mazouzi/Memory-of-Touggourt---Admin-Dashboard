@@ -1,5 +1,6 @@
 
 export type AppLanguage = 'ar' | 'en' | 'fr';
+export type UserRole = 'admin' | 'content manager';
 
 export enum CategoryType {
   RELIGIOUS = 'religion',
@@ -25,12 +26,20 @@ export interface Place {
   id: string;
   name: LocalizedText;
   address: LocalizedText;
-  category: string; // Stored as lowercase string in DB
+  category: string; 
   description: LocalizedText;
   imageUrl: string;
   location: Coordinates; 
   featured: boolean;
-  rating: number; // Mandatory number from 0 to 5
+  rating: number; 
+}
+
+export interface CityStaff {
+  uid: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  lastLogin?: any;
 }
 
 export interface DashboardStats {

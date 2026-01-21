@@ -5,19 +5,21 @@ import {
   MapPin, 
   Layers, 
   Settings, 
-  LogOut 
+  LogOut,
+  Users
 } from 'lucide-react';
 import { signOut, auth } from '../services/firebaseService';
-import { AppLanguage } from '../types';
+import { AppLanguage, UserRole } from '../types';
 import { translations } from '../translations';
 
 interface SidebarProps {
   currentLang: AppLanguage;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  userRole: UserRole;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab, userRole }) => {
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
 
@@ -25,8 +27,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab 
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard size={20} /> },
     { id: 'places', label: t.places, icon: <MapPin size={20} /> },
     { id: 'categories', label: t.categories, icon: <Layers size={20} /> },
+    { id: 'staff', label: t.staff, icon: <Users size={20} />, adminOnly: true },
     { id: 'settings', label: t.settings, icon: <Settings size={20} /> },
   ];
+
+  const filteredItems = navItems.filter(item => !item.adminOnly || userRole === 'admin');
 
   const handleLogout = async () => {
     try {
@@ -49,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab 
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
-        {navItems.map((item) => (
+        {filteredItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}

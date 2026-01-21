@@ -17,16 +17,30 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
   const t = translations[currentLang];
   const isFormRtl = editingLang === 'ar';
   
-  const [formData, setFormData] = useState<Partial<Place>>({
-    name: place?.name || { ar: '', en: '', fr: '' },
-    address: place?.address || { ar: '', en: '', fr: '' },
-    category: place?.category || 'culture',
-    description: place?.description || { ar: '', en: '', fr: '' },
-    imageUrl: place?.imageUrl || '',
-    featured: place?.featured || false,
-    rating: place?.rating ?? 4.5,
-    location: place?.location || { latitude: 33.1092, longitude: 6.0332 },
-    ...place
+  // Robust state initialization
+  const [formData, setFormData] = useState<Partial<Place>>(() => {
+    const defaults = {
+      name: { ar: '', en: '', fr: '' },
+      address: { ar: '', en: '', fr: '' },
+      category: 'culture',
+      description: { ar: '', en: '', fr: '' },
+      imageUrl: '',
+      featured: false,
+      rating: 4.5,
+      location: { latitude: 33.1092, longitude: 6.0332 }
+    };
+
+    if (!place) return defaults;
+
+    return {
+      ...defaults,
+      ...place,
+      // Ensure location is always a valid object with numbers
+      location: {
+        latitude: place.location?.latitude ?? defaults.location.latitude,
+        longitude: place.location?.longitude ?? defaults.location.longitude,
+      }
+    };
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -131,8 +145,11 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                 step="any"
                 required
                 className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                value={formData.location?.latitude}
-                onChange={e => setFormData({ ...formData, location: { ...formData.location!, latitude: parseFloat(e.target.value) } })}
+                value={formData.location?.latitude ?? ''}
+                onChange={e => {
+                  const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                  setFormData({ ...formData, location: { ...formData.location!, latitude: val } });
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -142,8 +159,11 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                 step="any"
                 required
                 className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                value={formData.location?.longitude}
-                onChange={e => setFormData({ ...formData, location: { ...formData.location!, longitude: parseFloat(e.target.value) } })}
+                value={formData.location?.longitude ?? ''}
+                onChange={e => {
+                  const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                  setFormData({ ...formData, location: { ...formData.location!, longitude: val } });
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -155,8 +175,11 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                 max="5"
                 required
                 className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                value={formData.rating}
-                onChange={e => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
+                value={formData.rating ?? ''}
+                onChange={e => {
+                  const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                  setFormData({ ...formData, rating: val });
+                }}
               />
             </div>
           </div>

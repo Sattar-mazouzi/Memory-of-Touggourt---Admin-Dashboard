@@ -3,8 +3,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import PlaceCard from './components/PlaceCard';
 import PlaceForm from './components/PlaceForm';
+import StaffManager from './components/StaffManager';
 import LoginPage from './components/LoginPage';
-import { Place, CategoryType, AppLanguage } from './types';
+import { Place, CategoryType, AppLanguage, UserRole } from './types';
 import { translations } from './translations';
 import { 
   onAuthStateChanged, 
@@ -105,20 +106,28 @@ const App: React.FC = () => {
           const userDocRef = doc(db, "users", currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           
-          if (userDoc.exists() && userDoc.data()?.role === 'admin') {
+          if (userDoc.exists()) {
             const userData = { ...currentUser, ...userDoc.data() };
-            setUser(userData);
-            setProfileFullName(userData.full_name || '');
-            setIsAuthorized(true);
+            const role = userData.role;
             
-            // ALWAYS direct to dashboard on login
-            setActiveTab('dashboard');
+            // Validate role matches rules - strictly admin or content manager
+            if (role === 'admin' || role === 'content manager') {
+              setUser(userData);
+              setProfileFullName(userData.full_name || '');
+              setIsAuthorized(true);
+              setActiveTab('dashboard');
+            } else {
+              setIsAuthorized(false);
+              await signOut(auth);
+              setUser(null);
+            }
           } else {
             setIsAuthorized(false);
             await signOut(auth);
             setUser(null);
           }
         } catch (err) {
+          console.error("Auth initialization error:", err);
           setIsAuthorized(false);
           setUser(null);
         }
@@ -132,7 +141,8 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    // Only fetch places if we have a user and they are authorized
+    if (!user || !isAuthorized) {
       setDataLoading(false);
       setPlaces([]);
       return;
@@ -148,12 +158,12 @@ const App: React.FC = () => {
       setPlaces(placesList || []);
       setDataLoading(false);
     }, (error) => {
-      console.error("Firestore Listen Error:", error);
+      console.error("Places Permission Error:", error);
       setDataLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, isAuthorized]);
 
   const statsData = [
     { name: t.jan, visits: 400 }, { name: t.feb, visits: 300 },
@@ -185,7 +195,7 @@ const App: React.FC = () => {
       setIsFormOpen(false);
       setEditingPlace(undefined);
     } catch (err) {
-      alert("Failed to save record.");
+      alert("Failed to save record. Check permissions.");
     }
   };
 
@@ -242,6 +252,11 @@ const App: React.FC = () => {
     return user?.email?.split('@')[0] || 'Admin';
   };
 
+  const getUserRoleLabel = (role: UserRole) => {
+    if (role === 'admin') return t.adminRole;
+    return t.managerRole;
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -256,14 +271,19 @@ const App: React.FC = () => {
       <LoginPage 
         currentLang={currentLang} 
         onLangChange={setCurrentLang}
-        errorOverride={!isAuthorized ? "Account access denied." : undefined} 
+        errorOverride={!isAuthorized ? "Account access denied or invalid role." : undefined} 
       />
     );
   }
 
   return (
     <div className={`min-h-screen flex bg-slate-50 animate-in fade-in duration-500`} dir={isRtl ? 'rtl' : 'ltr'}>
-      <Sidebar currentLang={currentLang} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar 
+        currentLang={currentLang} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        userRole={user?.role || 'content manager'}
+      />
       
       <main className={`flex-1 ${isRtl ? 'mr-64' : 'ml-64'} p-8 transition-all duration-300`}>
         <div className="flex justify-between items-center mb-8">
@@ -309,7 +329,7 @@ const App: React.FC = () => {
                 <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || user?.email || 'Admin'}`} className="w-8 h-8 rounded-full border border-orange-100" alt="Admin" />
                 <div className="flex flex-col text-start max-w-[120px]">
                   <span className="text-xs font-bold text-slate-700 leading-none truncate">{getDisplayName()}</span>
-                  <span className="text-[10px] text-orange-500 font-bold uppercase">{t.staff}</span>
+                  <span className="text-[10px] text-orange-500 font-bold uppercase">{getUserRoleLabel(user?.role)}</span>
                 </div>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -437,7 +457,7 @@ const App: React.FC = () => {
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">{t.manageAssets}</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t.managePlaces}</h3>
                 <p className="text-sm text-slate-400">Add or edit database records in real-time</p>
               </div>
               <button 
@@ -472,6 +492,10 @@ const App: React.FC = () => {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'staff' && user?.role === 'admin' && (
+          <StaffManager currentLang={currentLang} />
         )}
 
         {activeTab === 'settings' && (
@@ -551,7 +575,7 @@ const App: React.FC = () => {
                         <div className="space-y-4">
                           <div className="bg-slate-50 p-4 rounded-2xl">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.role}</p>
-                            <p className="font-bold text-slate-700">{t.adminRole}</p>
+                            <p className="font-bold text-slate-700">{getUserRoleLabel(user?.role)}</p>
                           </div>
                           <div className="bg-slate-50 p-4 rounded-2xl">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.lastLogin}</p>

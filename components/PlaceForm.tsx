@@ -117,6 +117,8 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                 <option value="history">{t.history}</option>
                 <option value="culture">{t.culture}</option>
                 <option value="nature">{t.nature}</option>
+                <option value="hotels">{t.hotels}</option>
+                <option value="restaurants">{t.restaurants}</option>
               </select>
             </div>
           </div>

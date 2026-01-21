@@ -4,7 +4,9 @@ import {
   MapPin, 
   History, 
   Palmtree, 
-  Church
+  Church,
+  Hotel,
+  UtensilsCrossed
 } from 'lucide-react';
 import { CategoryType } from './types';
 
@@ -19,6 +21,8 @@ export const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'history': <History className="w-6 h-6" />,
   'culture': <MapPin className="w-6 h-6" />,
   'nature': <Palmtree className="w-6 h-6" />,
+  'hotels': <Hotel className="w-6 h-6" />,
+  'restaurants': <UtensilsCrossed className="w-6 h-6" />,
 };
 
 export const MOCK_PLACES: any[] = []; // Not used as we fetch from Firebase

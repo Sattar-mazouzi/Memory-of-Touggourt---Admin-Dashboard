@@ -5,7 +5,9 @@ export enum CategoryType {
   RELIGIOUS = 'religion',
   HISTORICAL = 'history',
   CULTURAL = 'culture',
-  NATURAL = 'nature'
+  NATURAL = 'nature',
+  HOTELS = 'hotels',
+  RESTAURANTS = 'restaurants'
 }
 
 export interface LocalizedText {

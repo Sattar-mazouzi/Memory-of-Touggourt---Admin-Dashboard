@@ -163,14 +163,14 @@ const App: React.FC = () => {
 
   const categoryData = useMemo(() => {
     const list = places || [];
-    const categories = ['religion', 'history', 'culture', 'nature'];
+    const categories = ['religion', 'history', 'culture', 'nature', 'hotels', 'restaurants'];
     return categories.map(cat => ({
       name: t[cat as keyof typeof t] || cat,
       value: list.filter(p => p?.category === cat).length
     }));
   }, [places, t]);
 
-  const COLORS_PIE = ['#F97316', '#38BDF8', '#818CF8', '#F472B6'];
+  const COLORS_PIE = ['#F97316', '#38BDF8', '#818CF8', '#F472B6', '#10B981', '#F59E0B'];
 
   const handleSavePlace = async (placeData: Partial<Place>) => {
     try {

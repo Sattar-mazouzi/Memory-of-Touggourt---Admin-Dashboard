@@ -4,7 +4,8 @@ import {
   Save, Loader2, Image as ImageIcon, CheckCircle2, 
   History, Info, BookOpen, Globe, MapPin, CloudSun, Palette,
   Shirt, UtensilsCrossed, Music4, CalendarDays, Dices, Layers,
-  Layout, Type, Users, ThermometerSun, Edit2, X, Link as LinkIcon
+  Layout, Type, Users, ThermometerSun, Edit2, X, Link as LinkIcon,
+  Languages, Upload
 } from 'lucide-react';
 import { AppLanguage, CityArticle, LocalizedText, HeritageData } from '../types';
 import { translations } from '../translations';
@@ -20,6 +21,11 @@ interface ImageEditState {
   subField?: string;
   url: string;
 }
+
+// Cloudinary Configuration - Updated with user credentials
+// IMPORTANT: Ensure "touggourt_preset" is an UNSIGNED preset in your Cloudinary settings.
+const CLOUD_NAME = "dheayouzu"; 
+const UPLOAD_PRESET = "touggourt_preset"; 
 
 const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
@@ -132,6 +138,64 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     });
   };
 
+  const handleCloudinaryUpload = () => {
+    // @ts-ignore
+    if (!window.cloudinary) {
+      alert("Cloudinary script not loaded yet. Please refresh the page.");
+      console.error("Cloudinary widget script (global/all.js) is missing from index.html");
+      return;
+    }
+
+    try {
+      // @ts-ignore
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName: CLOUD_NAME,
+          uploadPreset: UPLOAD_PRESET,
+          multiple: false,
+          resourceType: 'image',
+          clientAllowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
+          maxFileSize: 10000000, // 10MB
+          showAdvancedOptions: false,
+          cropping: false,
+          sources: ['local', 'url', 'camera'],
+          styles: {
+            palette: {
+              window: "#FFFFFF",
+              windowBorder: "#90A0B3",
+              tabIcon: "#F97316",
+              menuIcons: "#5A616A",
+              textDark: "#000000",
+              textLight: "#FFFFFF",
+              link: "#F97316",
+              action: "#F97316",
+              inactiveTabIcon: "#0E2F5A",
+              error: "#F44235",
+              inProgress: "#F97316",
+              complete: "#20B832",
+              sourceBg: "#E4EBF1"
+            }
+          }
+        },
+        (error: any, result: any) => {
+          if (error) {
+            console.error("Cloudinary Widget Execution Error:", error);
+          }
+          if (!error && result && result.event === "success") {
+            const uploadedUrl = result.info.secure_url;
+            console.log("Upload successful! New URL:", uploadedUrl);
+            // Replace the URL in the modal preview immediately
+            setImageModal(prev => ({ ...prev, url: uploadedUrl }));
+          }
+        }
+      );
+      widget.open();
+    } catch (err) {
+      console.error("Failed to initialize Cloudinary Widget:", err);
+      alert("There was an error opening the upload tool. Please check your internet connection.");
+    }
+  };
+
   const handleUpdateImageUrl = () => {
     if (!article) return;
     const { field, subField, url } = imageModal;
@@ -192,7 +256,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
           className="flex items-center gap-2 bg-white text-orange-600 px-5 py-2.5 rounded-2xl font-black shadow-2xl hover:scale-110 active:scale-95 transition-all"
         >
           <Edit2 size={18} />
-          <span className="text-xs uppercase tracking-widest">{translations[currentLang].save}</span>
+          <span className="text-xs uppercase tracking-widest">{t.save}</span>
         </button>
       </div>
     </div>
@@ -211,48 +275,52 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* Article Header Controls */}
-      <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-6 rounded-[32px] shadow-sm border border-slate-100 sticky top-4 z-40">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-slate-900 text-white rounded-2xl">
-            <Layout size={24} />
+      
+      {/* Floating Control Hub */}
+      <div className="sticky top-6 z-50 flex justify-center w-full mb-12">
+        <div className="bg-white/80 backdrop-blur-2xl px-6 py-3 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 flex items-center gap-8 animate-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 border-e border-slate-200 pe-6">
+             <div className="p-2 bg-slate-900 text-white rounded-full">
+                <Layout size={18} />
+             </div>
+             <div>
+                <h3 className="text-sm font-black text-slate-800 leading-none mb-1">{t.editCityInfo}</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Touggourt Memory</p>
+             </div>
           </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-800">{t.editCityInfo}</h3>
-            <p className="text-xs text-slate-400 font-medium">Currently editing: {article.name[editingLang]}</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
-            {(['en', 'ar', 'fr'] as const).map(l => (
-              <button
-                key={l}
-                onClick={() => setEditingLang(l)}
-                className={`px-4 py-2 rounded-lg text-xs font-black uppercase transition-all ${
-                  editingLang === l ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+          <div className="flex items-center gap-6">
+             <div className="flex items-center gap-2 bg-slate-100/50 p-1 rounded-full border border-slate-200">
+                <Languages size={14} className="text-slate-400 ml-2" />
+                {(['en', 'ar', 'fr'] as const).map(l => (
+                  <button
+                    key={l}
+                    onClick={() => setEditingLang(l)}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${
+                      editingLang === l ? 'bg-white text-orange-600 shadow-sm ring-1 ring-slate-100' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+             </div>
+
+             <button 
+                onClick={handleSave}
+                disabled={saving}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-xs transition-all shadow-lg active:scale-95 disabled:opacity-50 ${
+                  success ? 'bg-green-500 text-white shadow-green-100' : 'bg-orange-500 text-white shadow-orange-100 hover:bg-orange-600'
                 }`}
               >
-                {l}
+                {saving ? <Loader2 size={16} className="animate-spin" /> : success ? <CheckCircle2 size={16} /> : <Save size={16} />}
+                {success ? t.articleUpdated : t.save}
               </button>
-            ))}
           </div>
-          <button 
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-orange-500 text-white px-8 py-3.5 rounded-2xl font-black shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={20} className="animate-spin" /> : success ? <CheckCircle2 size={20} /> : <Save size={20} />}
-            {success ? t.articleUpdated : t.save}
-          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Content Column */}
         <div className="lg:col-span-8 space-y-8">
-          
-          {/* Identity */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
@@ -277,7 +345,6 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
              </div>
           </div>
 
-          {/* Biographies */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
              <SectionHeader icon={<Info size={22} />} title={t.mainBio} />
              <textarea 
@@ -298,7 +365,6 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
               />
           </div>
 
-          {/* Geo & Hist */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-10">
             <div>
               <SectionHeader icon={<MapPin size={22} />} title={t.geography} />
@@ -331,7 +397,6 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
             </div>
           </div>
 
-          {/* Climate */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
              <SectionHeader icon={<ThermometerSun size={22} />} title="Climate Summary" />
              <input 
@@ -351,7 +416,6 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
              />
           </div>
 
-          {/* Heritage */}
           <div className="bg-slate-900 p-10 rounded-[50px] space-y-8">
              <div className="flex items-center gap-3">
                 <Palette className="text-orange-500" size={32} />
@@ -382,10 +446,8 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
           </div>
         </div>
 
-        {/* Sidebar Media */}
         <div className="lg:col-span-4">
            <div className="sticky top-32 z-10 space-y-8">
-             
              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-6">
                <div className="space-y-4">
                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -444,7 +506,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
         </div>
       </div>
 
-      {/* Image URL Modal */}
+      {/* Image URL & Upload Modal */}
       {imageModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
            <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -453,15 +515,15 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                     <div className="p-2.5 bg-orange-100 text-orange-600 rounded-xl">
                        <ImageIcon size={22} />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800">Update Image URL</h3>
+                    <h3 className="text-xl font-black text-slate-800">{t.updateEntry}</h3>
                  </div>
                  <button onClick={() => setImageModal(prev => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                     <X size={24} className="text-slate-400" />
                  </button>
               </div>
 
-              <div className="p-10 space-y-8">
-                 <div className="aspect-video rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner">
+              <div className="p-8 space-y-6">
+                 <div className="aspect-video rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner group relative">
                     {imageModal.url ? (
                       <img src={imageModal.url} className="w-full h-full object-cover" alt="Preview" onError={(e) => (e.currentTarget.src = 'https://images.unsplash.com/photo-1548013146-72479768bada?w=600')} />
                     ) : (
@@ -469,21 +531,40 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                         <ImageIcon size={64} />
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button 
+                          onClick={handleCloudinaryUpload}
+                          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-xl hover:scale-105 transition-transform"
+                        >
+                          <Upload size={18} /> {t.uploadImage}
+                        </button>
+                    </div>
                  </div>
 
-                 <div className="space-y-4">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                       <LinkIcon size={16} /> Asset URL Source
-                    </label>
-                    <input 
-                       type="url"
-                       autoFocus
-                       className="w-full bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-2xl p-5 text-sm font-bold text-slate-600 transition-all shadow-sm"
-                       placeholder="Paste the image direct URL here..."
-                       value={imageModal.url}
-                       onChange={e => setImageModal(prev => ({ ...prev, url: e.target.value }))}
-                    />
-                    <p className="text-[10px] text-slate-400 font-medium px-2">Use high-quality permanent image links (Unsplash, Raw Github, etc.)</p>
+                 <div className="grid grid-cols-1 gap-4">
+                    <button 
+                       onClick={handleCloudinaryUpload}
+                       className="w-full py-4 bg-orange-100 text-orange-600 font-black rounded-2xl hover:bg-orange-200 transition-all flex items-center justify-center gap-2"
+                    >
+                       <Upload size={20} />
+                       {t.uploadImage}
+                    </button>
+
+                    <div className="relative">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-white px-2">
+                           {t.assetUrl}
+                        </label>
+                        <div className="flex items-center gap-2 bg-slate-50 border-none focus-within:ring-2 ring-orange-100 rounded-2xl p-4 transition-all shadow-sm">
+                           <LinkIcon size={18} className="text-slate-300" />
+                           <input 
+                              type="url"
+                              className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-600 transition-all"
+                              placeholder="Or paste direct URL..."
+                              value={imageModal.url}
+                              onChange={e => setImageModal(prev => ({ ...prev, url: e.target.value }))}
+                           />
+                        </div>
+                    </div>
                  </div>
               </div>
 
@@ -492,13 +573,13 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                    onClick={() => setImageModal(prev => ({ ...prev, isOpen: false }))}
                    className="flex-1 py-4 bg-white text-slate-500 font-black rounded-2xl hover:bg-slate-100 transition-all border border-slate-200"
                  >
-                   {translations[currentLang].cancel}
+                   {t.cancel}
                  </button>
                  <button 
                    onClick={handleUpdateImageUrl}
                    className="flex-[2] py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 hover:scale-[1.02] active:scale-95 transition-all"
                  >
-                   {translations[currentLang].save}
+                   {t.save}
                  </button>
               </div>
            </div>

@@ -32,7 +32,7 @@ export const translations = {
     editAsset: "تعديل الأصل",
     newAsset: "أصل سياحي جديد",
     saveNewEntry: "حفظ إدخال جديد",
-    updateEntry: "تحديث الإدخال",
+    updateEntry: "تحديث الإدخل",
     cancel: "إلغاء",
     visitorsOverview: "نظرة عامة على الزوار",
     uptime: "وقت التشغيل",
@@ -97,7 +97,10 @@ export const translations = {
     exploreGallery: "معرض الصور",
     architectureImage: "صور المعمار",
     oasisImage: "صور الواحات",
-    dunesImage: "صور الكثبان"
+    dunesImage: "صور الكثبان",
+    uploadImage: "رفع صورة",
+    uploading: "جاري الرفع...",
+    assetUrl: "رابط الأصل"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -194,7 +197,10 @@ export const translations = {
     exploreGallery: "Photo Gallery",
     architectureImage: "Architecture Image",
     oasisImage: "Oasis Image",
-    dunesImage: "Dunes Image"
+    dunesImage: "Dunes Image",
+    uploadImage: "Upload Image",
+    uploading: "Uploading...",
+    assetUrl: "Asset URL"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -291,6 +297,9 @@ export const translations = {
     exploreGallery: "Galerie Photos",
     architectureImage: "Image Architecture",
     oasisImage: "Image Oasis",
-    dunesImage: "Image Dunes"
+    dunesImage: "Image Dunes",
+    uploadImage: "Télécharger l'image",
+    uploading: "Téléchargement...",
+    assetUrl: "URL de l'actif"
   }
 };

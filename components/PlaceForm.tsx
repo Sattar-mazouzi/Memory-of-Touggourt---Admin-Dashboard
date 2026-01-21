@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Star } from 'lucide-react';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon } from 'lucide-react';
 import { Place, LocalizedText, AppLanguage } from '../types';
 import { translations } from '../translations';
 
@@ -10,6 +10,11 @@ interface PlaceFormProps {
   onSave: (place: Partial<Place>) => void;
   onClose: () => void;
 }
+
+// Cloudinary Configuration - Updated with user credentials
+// IMPORTANT: Ensure "touggourt_preset" is an UNSIGNED preset in your Cloudinary settings.
+const CLOUD_NAME = "dheayouzu"; 
+const UPLOAD_PRESET = "touggourt_preset"; 
 
 const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClose }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
@@ -48,6 +53,61 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
         [editingLang]: value
       }
     }));
+  };
+
+  const handleCloudinaryUpload = () => {
+    // @ts-ignore
+    if (!window.cloudinary) {
+      alert("Cloudinary script not loaded yet. Please refresh the page.");
+      return;
+    }
+
+    try {
+      // @ts-ignore
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName: CLOUD_NAME,
+          uploadPreset: UPLOAD_PRESET,
+          multiple: false,
+          resourceType: 'image',
+          clientAllowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
+          maxFileSize: 10000000, 
+          sources: ['local', 'url', 'camera'],
+          styles: {
+            palette: {
+              window: "#FFFFFF",
+              windowBorder: "#90A0B3",
+              tabIcon: "#F97316",
+              menuIcons: "#5A616A",
+              textDark: "#000000",
+              textLight: "#FFFFFF",
+              link: "#F97316",
+              action: "#F97316",
+              inactiveTabIcon: "#0E2F5A",
+              error: "#F44235",
+              inProgress: "#F97316",
+              complete: "#20B832",
+              sourceBg: "#E4EBF1"
+            }
+          }
+        },
+        (error: any, result: any) => {
+          if (error) {
+            console.error("Cloudinary Widget Execution Error:", error);
+          }
+          if (!error && result && result.event === "success") {
+            const uploadedUrl = result.info.secure_url;
+            console.log("Upload successful! New URL:", uploadedUrl);
+            // Directly replace the imageUrl in the form data
+            setFormData(prev => ({ ...prev, imageUrl: uploadedUrl }));
+          }
+        }
+      );
+      widget.open();
+    } catch (err) {
+      console.error("Failed to initialize Cloudinary Widget:", err);
+      alert("Unable to open upload tool. Please check your credentials.");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -179,11 +239,9 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
           </div>
 
           <div className="space-y-2 relative">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                {t.description} ({editingLang.toUpperCase()})
-              </label>
-            </div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {t.description} ({editingLang.toUpperCase()})
+            </label>
             <textarea
               required
               rows={4}
@@ -195,26 +253,45 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.image}</label>
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <input
-                  type="url"
-                  required
-                  className={`w-full ${editingLang === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none`}
-                  placeholder="https://..."
-                  value={formData.imageUrl}
-                  onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                />
-                <ImageIcon className={`absolute ${editingLang === 'ar' ? 'right-4' : 'left-4'} top-3.5 text-slate-300`} size={20} />
-              </div>
-              <div className="w-20 h-14 bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-48 aspect-video md:aspect-square bg-slate-100 rounded-3xl overflow-hidden flex items-center justify-center shrink-0 border border-slate-200 shadow-inner group relative">
                 {formData.imageUrl ? (
-                  <img src={formData.imageUrl} className="w-full h-full object-cover" alt="Preview" />
+                  <img src={formData.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Preview" />
                 ) : (
-                  <ImageIcon size={20} className="text-slate-300" />
+                  <ImageIcon size={40} className="text-slate-300" />
                 )}
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button type="button" onClick={handleCloudinaryUpload} className="p-2 bg-white rounded-full shadow-lg text-orange-600 hover:scale-110 transition-transform">
+                      <Upload size={20} />
+                    </button>
+                </div>
+              </div>
+              
+              <div className="flex-1 space-y-4">
+                <button 
+                  type="button"
+                  onClick={handleCloudinaryUpload}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-orange-100 text-orange-600 font-bold rounded-2xl hover:bg-orange-200 transition-colors"
+                >
+                  <Upload size={20} />
+                  {t.uploadImage}
+                </button>
+                
+                <div className="relative">
+                  <div className={`absolute ${editingLang === 'ar' ? 'right-4' : 'left-4'} top-3.5 text-slate-300`}>
+                    <LinkIcon size={20} />
+                  </div>
+                  <input
+                    type="url"
+                    required
+                    className={`w-full ${editingLang === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3.5 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none text-sm font-medium`}
+                    placeholder="https://... or paste URL"
+                    value={formData.imageUrl}
+                    onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -34,6 +34,41 @@ export interface Place {
   rating: number; 
 }
 
+export interface HeritageData {
+  industries: LocalizedText;
+  clothing: LocalizedText;
+  culinaryArts: LocalizedText;
+  folklore: LocalizedText;
+  festivals: LocalizedText;
+  games: LocalizedText;
+}
+
+export interface GalleryData {
+  architecture: string;
+  camel: string;
+  culture: string;
+  dunes: string;
+  oasis: string;
+}
+
+export interface CityArticle {
+  id: string;
+  name: LocalizedText;
+  population: number;
+  cover: string;
+  location: string; // map image url
+  bio: LocalizedText;
+  extendedBio: LocalizedText;
+  geography: LocalizedText;
+  histBio: LocalizedText;
+  extendedHistBio: LocalizedText;
+  climate: LocalizedText;
+  climateandTopography: LocalizedText;
+  heritage: HeritageData;
+  gallery: GalleryData;
+  updatedAt?: any;
+}
+
 export interface CityStaff {
   uid: string;
   email: string;

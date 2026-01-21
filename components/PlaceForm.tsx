@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { X, Sparkles, Image as ImageIcon, Loader2, Star } from 'lucide-react';
-import { Place, CategoryType, LocalizedText, AppLanguage } from '../types';
+import { X, Image as ImageIcon, Star } from 'lucide-react';
+import { Place, LocalizedText, AppLanguage } from '../types';
 import { translations } from '../translations';
-import { generatePlaceDescription } from '../services/geminiService';
 
 interface PlaceFormProps {
   place?: Place;
@@ -17,7 +16,6 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
   const t = translations[currentLang];
   const isFormRtl = editingLang === 'ar';
   
-  // Robust state initialization
   const [formData, setFormData] = useState<Partial<Place>>(() => {
     const defaults = {
       name: { ar: '', en: '', fr: '' },
@@ -35,31 +33,12 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     return {
       ...defaults,
       ...place,
-      // Ensure location is always a valid object with numbers
       location: {
         latitude: place.location?.latitude ?? defaults.location.latitude,
         longitude: place.location?.longitude ?? defaults.location.longitude,
       }
     };
   });
-  
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleAIHelp = async () => {
-    const currentName = formData.name?.[editingLang];
-    if (!currentName) return alert(editingLang === 'ar' ? 'يرجى إدخال اسم المكان أولاً باللغة الحالية' : 'Please enter a place name first in the current language');
-    setIsGenerating(true);
-    const desc = await generatePlaceDescription(currentName, formData.category || 'culture');
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      description: { 
-        ...prev.description as LocalizedText, 
-        [editingLang]: desc 
-      } 
-    }));
-    setIsGenerating(false);
-  };
 
   const updateLocalized = (field: 'name' | 'address' | 'description', value: string) => {
     setFormData(prev => ({
@@ -204,15 +183,6 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 {t.description} ({editingLang.toUpperCase()})
               </label>
-              <button 
-                type="button"
-                onClick={handleAIHelp}
-                disabled={isGenerating}
-                className="flex items-center gap-1.5 text-[10px] font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full hover:bg-orange-100 transition-colors disabled:opacity-50"
-              >
-                {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                {t.suggestAI}
-              </button>
             </div>
             <textarea
               required

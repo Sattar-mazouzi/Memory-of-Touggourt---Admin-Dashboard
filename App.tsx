@@ -4,8 +4,9 @@ import Sidebar from './components/Sidebar';
 import PlaceCard from './components/PlaceCard';
 import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
+import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
-import { Place, CategoryType, AppLanguage, UserRole } from './types';
+import { Place, AppLanguage, UserRole } from './types';
 import { translations } from './translations';
 import { 
   onAuthStateChanged, 
@@ -19,8 +20,7 @@ import {
   doc, 
   getDoc,
   signOut,
-  query,
-  orderBy
+  query
 } from './services/firebaseService';
 import { 
   BarChart, 
@@ -43,7 +43,6 @@ import {
   MapPin, 
   Settings, 
   Loader2,
-  Globe,
   ChevronDown,
   User,
   LogOut,
@@ -52,7 +51,7 @@ import {
   Layers,
   Save,
   CheckCircle2,
-  Sparkles
+  Layout
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -75,7 +74,6 @@ const App: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Profile Edit State
   const [profileFullName, setProfileFullName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [showProfileSuccess, setShowProfileSuccess] = useState(false);
@@ -88,7 +86,6 @@ const App: React.FC = () => {
     localStorage.setItem('admin_lang', currentLang);
   }, [currentLang, isRtl]);
 
-  // Click outside listener for profile dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -110,7 +107,6 @@ const App: React.FC = () => {
             const userData = { ...currentUser, ...userDoc.data() };
             const role = userData.role;
             
-            // Validate role matches rules - strictly admin or content manager
             if (role === 'admin' || role === 'content manager') {
               setUser(userData);
               setProfileFullName(userData.full_name || '');
@@ -141,7 +137,6 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Only fetch places if we have a user and they are authorized
     if (!user || !isAuthorized) {
       setDataLoading(false);
       setPlaces([]);
@@ -320,7 +315,6 @@ const App: React.FC = () => {
               />
             </div>
             
-            {/* Admin Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -364,7 +358,6 @@ const App: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Welcome Banner */}
             <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-8 rounded-[40px] text-white relative overflow-hidden shadow-2xl shadow-slate-200">
                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
@@ -372,7 +365,7 @@ const App: React.FC = () => {
                <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                      <div className="p-2 bg-white/10 backdrop-blur rounded-xl">
-                        <Sparkles className="text-orange-400" size={24} />
+                        <Layout className="text-orange-400" size={24} />
                      </div>
                      <h3 className="text-xl md:text-2xl font-bold tracking-tight">
                        {t.welcomeAdmin} {getDisplayName()}!
@@ -494,6 +487,10 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'aboutCity' && (
+           <CityInfoEditor currentLang={currentLang} />
+        )}
+
         {activeTab === 'staff' && user?.role === 'admin' && (
           <StaffManager currentLang={currentLang} />
         )}
@@ -602,7 +599,6 @@ const App: React.FC = () => {
                         <ul className="mt-6 space-y-3">
                            {[
                              "Real-time tourism data sync",
-                             "AI-assisted content generation",
                              "Multi-language support (AR, EN, FR)",
                              "Featured assets management"
                            ].map((feature, idx) => (

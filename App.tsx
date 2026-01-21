@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import PlaceCard from './components/PlaceCard';
 import PlaceForm from './components/PlaceForm';
@@ -42,7 +42,15 @@ import {
   MapPin, 
   Settings, 
   Loader2,
-  Globe
+  Globe,
+  ChevronDown,
+  User,
+  LogOut,
+  ShieldCheck,
+  Calendar,
+  Layers,
+  Save,
+  CheckCircle2
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -61,6 +69,14 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Profile Edit State
+  const [profileFullName, setProfileFullName] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [showProfileSuccess, setShowProfileSuccess] = useState(false);
 
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
@@ -70,6 +86,17 @@ const App: React.FC = () => {
     localStorage.setItem('admin_lang', currentLang);
   }, [currentLang, isRtl]);
 
+  // Click outside listener for profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -78,7 +105,9 @@ const App: React.FC = () => {
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists() && userDoc.data()?.role === 'admin') {
-            setUser(currentUser);
+            const userData = { ...currentUser, ...userDoc.data() };
+            setUser(userData);
+            setProfileFullName(userData.full_name || '');
             setIsAuthorized(true);
           } else {
             setIsAuthorized(false);
@@ -166,6 +195,34 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsUpdatingProfile(true);
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, {
+        full_name: profileFullName
+      });
+      setUser((prev: any) => ({ ...prev, full_name: profileFullName }));
+      setShowProfileSuccess(true);
+      setTimeout(() => setShowProfileSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      alert("Update failed");
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase();
     const list = places || [];
@@ -175,6 +232,11 @@ const App: React.FC = () => {
       return nameCurrent.includes(q) || addrCurrent.includes(q);
     });
   }, [places, searchQuery, currentLang]);
+
+  const getDisplayName = () => {
+    if (user?.full_name) return user.full_name;
+    return user?.email?.split('@')[0] || 'Admin';
+  };
 
   if (authLoading) {
     return (
@@ -234,12 +296,44 @@ const App: React.FC = () => {
               />
             </div>
             
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100">
-              <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.email || 'Admin'}`} className="w-8 h-8 rounded-full border border-orange-100" alt="Admin" />
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-700 leading-none">{user?.email?.split('@')[0] || 'Admin'}</span>
-                <span className="text-[10px] text-orange-500 font-bold uppercase">{t.staff}</span>
-              </div>
+            {/* Admin Profile Dropdown */}
+            <div className="relative" ref={profileRef}>
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100 hover:border-orange-200 transition-all ${isProfileOpen ? 'ring-2 ring-orange-100' : ''}`}
+              >
+                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || user?.email || 'Admin'}`} className="w-8 h-8 rounded-full border border-orange-100" alt="Admin" />
+                <div className="flex flex-col text-start max-w-[120px]">
+                  <span className="text-xs font-bold text-slate-700 leading-none truncate">{getDisplayName()}</span>
+                  <span className="text-[10px] text-orange-500 font-bold uppercase">{t.staff}</span>
+                </div>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isProfileOpen && (
+                <div className={`absolute top-full mt-2 ${isRtl ? 'left-0' : 'right-0'} w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 animate-in fade-in zoom-in-95 duration-200`}>
+                  <div className="p-4 border-b border-slate-50">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.profile}</p>
+                    <p className="text-sm font-bold text-slate-800 truncate">{user?.email}</p>
+                  </div>
+                  <div className="p-2">
+                    <button 
+                      onClick={() => { setActiveTab('settings'); setIsProfileOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                    >
+                      <User size={18} className="text-slate-400" />
+                      {t.settings}
+                    </button>
+                    <button 
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut size={18} className="text-red-400" />
+                      {t.signOut}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -356,10 +450,132 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {(activeTab === 'categories' || activeTab === 'settings') && (
+        {activeTab === 'settings' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
+               <div className="h-32 bg-gradient-to-r from-orange-400 to-orange-600 relative">
+                  <div className={`absolute -bottom-12 ${isRtl ? 'right-12' : 'left-12'}`}>
+                    <img 
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || user?.email || 'Admin'}`} 
+                      className="w-24 h-24 rounded-3xl border-4 border-white shadow-xl bg-white" 
+                      alt="Profile" 
+                    />
+                  </div>
+               </div>
+               <div className={`pt-16 pb-12 px-12 space-y-8`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-800 mb-1">{getDisplayName()}</h2>
+                      <p className="text-slate-400">{user?.email}</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-colors"
+                      >
+                        <LogOut size={20} /> {t.signOut}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-slate-50">
+                    <div className="space-y-8">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                           <User className="text-orange-500" size={20} /> {t.updateProfile}
+                         </h3>
+                         {showProfileSuccess && (
+                            <div className="flex items-center gap-1.5 text-green-500 animate-in fade-in slide-in-from-right-2">
+                               <CheckCircle2 size={16} />
+                               <span className="text-xs font-bold uppercase">{t.profileUpdated}</span>
+                            </div>
+                         )}
+                      </div>
+                      
+                      <form onSubmit={handleUpdateProfile} className="space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.fullName}</label>
+                          <input 
+                            type="text"
+                            required
+                            className="w-full px-5 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none text-slate-700 font-medium"
+                            placeholder={t.fullName}
+                            value={profileFullName}
+                            onChange={e => setProfileFullName(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isUpdatingProfile}
+                          className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                        >
+                          {isUpdatingProfile ? (
+                            <Loader2 size={24} className="animate-spin" />
+                          ) : (
+                            <>
+                              <Save size={20} />
+                              {t.saveChanges}
+                            </>
+                          )}
+                        </button>
+                      </form>
+
+                      <div className="space-y-6 pt-4">
+                        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                          <ShieldCheck className="text-orange-500" size={20} /> {t.accountInfo}
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="bg-slate-50 p-4 rounded-2xl">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.role}</p>
+                            <p className="font-bold text-slate-700">{t.adminRole}</p>
+                          </div>
+                          <div className="bg-slate-50 p-4 rounded-2xl">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.lastLogin}</p>
+                            <p className="font-bold text-slate-700 flex items-center gap-2">
+                              <Calendar size={14} className="text-slate-400" />
+                              {new Date(user?.metadata?.lastSignInTime).toLocaleDateString(currentLang === 'ar' ? 'ar-DZ' : currentLang === 'fr' ? 'fr-FR' : 'en-US', { dateStyle: 'long' })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <Settings className="text-orange-500" size={20} /> {t.appName}
+                      </h3>
+                      <div className="bg-slate-50 p-8 rounded-[40px] border border-orange-50 shadow-inner">
+                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-orange-50">
+                           <span className="text-orange-500 font-black text-2xl">T</span>
+                        </div>
+                        <p className="text-slate-600 leading-relaxed font-medium">
+                           {translations[currentLang].appName} {translations[currentLang].adminPortal} is your central workspace for digital curation.
+                        </p>
+                        <ul className="mt-6 space-y-3">
+                           {[
+                             "Real-time tourism data sync",
+                             "AI-assisted content generation",
+                             "Multi-language support (AR, EN, FR)",
+                             "Featured assets management"
+                           ].map((feature, idx) => (
+                             <li key={idx} className="flex items-center gap-2 text-sm text-slate-500">
+                                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
+                                {feature}
+                             </li>
+                           ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'categories' && (
           <div className="bg-white p-12 rounded-[40px] text-center shadow-sm border border-slate-100">
-             <Settings className="text-orange-500 animate-pulse mx-auto mb-6" size={48} />
-             <h2 className="text-2xl font-bold text-slate-800 mb-2">{t.settings}</h2>
+             <Layers className="text-orange-500 animate-pulse mx-auto mb-6" size={48} />
+             <h2 className="text-2xl font-bold text-slate-800 mb-2">{t.categories}</h2>
              <p className="text-slate-400">Advanced settings are coming soon.</p>
           </div>
         )}

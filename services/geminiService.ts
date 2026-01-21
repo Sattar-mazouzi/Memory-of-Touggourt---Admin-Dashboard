@@ -10,7 +10,8 @@ export const generatePlaceDescription = async (placeName: string, category: stri
       contents: `Generate a compelling tourism description for a place called "${placeName}" in the city of Touggourt, Algeria. The category is ${category}. Keep it under 60 words and emphasize the cultural significance.`,
       config: {
         temperature: 0.7,
-        maxOutputTokens: 150,
+        // Using thinkingConfig to ensure the model reasoning is handled according to latest SDK standards
+        thinkingConfig: { thinkingBudget: 0 },
       }
     });
     return response.text || "No description generated.";
@@ -30,7 +31,9 @@ export const suggestTags = async (description: string): Promise<string[]> => {
         responseSchema: {
           type: Type.ARRAY,
           items: { type: Type.STRING }
-        }
+        },
+        // Disable thinking for purely structured extraction tasks to reduce latency
+        thinkingConfig: { thinkingBudget: 0 },
       }
     });
     return JSON.parse(response.text || "[]");

@@ -8,7 +8,7 @@ export const translations = {
     dashboard: "لوحة القيادة",
     places: "الأماكن",
     categories: "التصنيفات",
-    settings: "الإعدادات",
+    settings: "الإعدادات والملف الشخصي",
     signOut: "تسجيل الخروج",
     welcomeBack: "مرحباً بعودتك",
     signInDesc: "سجل الدخول لإدارة قاعدة بيانات السياحة",
@@ -49,7 +49,16 @@ export const translations = {
     history: "تاريخي",
     culture: "ثقافي",
     nature: "طبيعي",
-    jan: "يناير", feb: "فبراير", mar: "مارس", apr: "أبريل", may: "مايو", jun: "يونيو"
+    jan: "يناير", feb: "فبراير", mar: "مارس", apr: "أبريل", may: "مايو", jun: "يونيو",
+    profile: "الملف الشخصي",
+    accountInfo: "معلومات الحساب",
+    role: "الدور",
+    adminRole: "مسؤول النظام",
+    lastLogin: "آخر تسجيل دخول",
+    fullName: "الاسم الكامل",
+    updateProfile: "تحديث الملف الشخصي",
+    saveChanges: "حفظ التغييرات",
+    profileUpdated: "تم تحديث الملف الشخصي بنجاح"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -57,7 +66,7 @@ export const translations = {
     dashboard: "Dashboard",
     places: "Places",
     categories: "Categories",
-    settings: "Settings",
+    settings: "Settings & Profile",
     signOut: "Sign Out",
     welcomeBack: "Welcome Back",
     signInDesc: "Sign in to manage your tourism database",
@@ -98,7 +107,16 @@ export const translations = {
     history: "Historical",
     culture: "Cultural",
     nature: "Natural",
-    jan: "Jan", feb: "Feb", mar: "Mar", apr: "Apr", may: "May", jun: "Jun"
+    jan: "Jan", feb: "Feb", mar: "Mar", apr: "Apr", may: "May", jun: "Jun",
+    profile: "Profile",
+    accountInfo: "Account Information",
+    role: "Role",
+    adminRole: "System Administrator",
+    lastLogin: "Last Login",
+    fullName: "Full Name",
+    updateProfile: "Update Profile",
+    saveChanges: "Save Changes",
+    profileUpdated: "Profile updated successfully"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -106,7 +124,7 @@ export const translations = {
     dashboard: "Tableau de Bord",
     places: "Lieux",
     categories: "Catégories",
-    settings: "Paramètres",
+    settings: "Paramètres & Profil",
     signOut: "Déconnexion",
     welcomeBack: "Bon Retour",
     signInDesc: "Connectez-vous pour gérer votre base de données touristique",
@@ -147,6 +165,15 @@ export const translations = {
     history: "Historique",
     culture: "Culturel",
     nature: "Naturel",
-    jan: "Jan", feb: "Fév", mar: "Mar", apr: "Avr", may: "Mai", jun: "Juin"
+    jan: "Jan", feb: "Fév", mar: "Mar", apr: "Avr", may: "Mai", jun: "Juin",
+    profile: "Profil",
+    accountInfo: "Informations du Compte",
+    role: "Rôle",
+    adminRole: "Administrateur Système",
+    lastLogin: "Dernière Connexion",
+    fullName: "Nom Complet",
+    updateProfile: "Mettre à jour le profil",
+    saveChanges: "Enregistrer les modifications",
+    profileUpdated: "Profil mis à jour avec succès"
   }
 };

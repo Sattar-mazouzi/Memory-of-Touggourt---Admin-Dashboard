@@ -60,7 +60,10 @@ export const translations = {
     updateProfile: "تحديث الملف الشخصي",
     saveChanges: "حفظ التغييرات",
     profileUpdated: "تم تحديث الملف الشخصي بنجاح",
-    dashboardSubtitle: "نظرة سريعة على أصول السياحة في تقرت اليوم"
+    dashboardSubtitle: "نظرة سريعة على أصول السياحة في تقرت اليوم",
+    rating: "التقييم",
+    latitude: "خط العرض",
+    longitude: "خط الطول"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -120,7 +123,10 @@ export const translations = {
     updateProfile: "Update Profile",
     saveChanges: "Save Changes",
     profileUpdated: "Profile updated successfully",
-    dashboardSubtitle: "Quick overview of Touggourt's tourism assets today"
+    dashboardSubtitle: "Quick overview of Touggourt's tourism assets today",
+    rating: "Rating",
+    latitude: "Latitude",
+    longitude: "Longitude"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -180,6 +186,9 @@ export const translations = {
     updateProfile: "Mettre à jour le profil",
     saveChanges: "Enregistrer les modifications",
     profileUpdated: "Profil mis à jour avec succès",
-    dashboardSubtitle: "Aperçu rapide des actifs touristiques de Touggourt aujourd'hui"
+    dashboardSubtitle: "Aperçu rapide des actifs touristiques de Touggourt aujourd'hui",
+    rating: "Évaluation",
+    latitude: "Latitude",
+    longitude: "Longitude"
   }
 };

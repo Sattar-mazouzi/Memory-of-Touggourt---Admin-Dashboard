@@ -28,11 +28,16 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
           alt={name} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {place.featured && (
-          <div className={`absolute top-4 ${isRtl ? 'right-4' : 'left-4'} bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg`}>
-            <Star size={12} fill="white" /> {t.featured}
+        <div className={`absolute top-4 ${isRtl ? 'right-4' : 'left-4'} flex flex-col gap-2`}>
+          {place.featured && (
+            <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg w-fit">
+              <Star size={12} fill="white" /> {t.featured}
+            </div>
+          )}
+          <div className="bg-white/90 backdrop-blur text-slate-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm w-fit border border-white/50">
+            <Star size={12} className="text-orange-500" fill="currentColor" /> {place.rating?.toFixed(1) || '0.0'}
           </div>
-        )}
+        </div>
         <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} flex gap-2`}>
           <button 
             onClick={() => onEdit(place)}
@@ -50,7 +55,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
       </div>
       <div className="p-5">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-slate-800 text-lg leading-snug">{name}</h3>
+          <h3 className="font-bold text-slate-800 text-lg leading-snug line-clamp-1">{name}</h3>
           <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-bold uppercase tracking-wider shrink-0 ml-2">
             {t[place.category as keyof typeof t] || place.category}
           </span>

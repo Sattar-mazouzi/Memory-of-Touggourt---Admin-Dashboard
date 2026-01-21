@@ -15,8 +15,8 @@ export interface LocalizedText {
 }
 
 export interface Coordinates {
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
 }
 
 export interface Place {
@@ -26,9 +26,9 @@ export interface Place {
   category: string; // Stored as lowercase string in DB
   description: LocalizedText;
   imageUrl: string;
-  location: Coordinates; // This is the coordinate map in Firestore
+  location: Coordinates; 
   featured: boolean;
-  rating?: number;
+  rating: number; // Mandatory number from 0 to 5
 }
 
 export interface DashboardStats {

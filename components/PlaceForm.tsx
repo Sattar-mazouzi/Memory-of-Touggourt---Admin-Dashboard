@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Sparkles, Image as ImageIcon, Loader2, Globe } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Loader2, Star } from 'lucide-react';
 import { Place, CategoryType, LocalizedText, AppLanguage } from '../types';
 import { translations } from '../translations';
 import { generatePlaceDescription } from '../services/geminiService';
@@ -24,7 +24,8 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     description: place?.description || { ar: '', en: '', fr: '' },
     imageUrl: place?.imageUrl || '',
     featured: place?.featured || false,
-    location: place?.location || { lat: 33.1092, lng: 6.0332 },
+    rating: place?.rating ?? 4.5,
+    location: place?.location || { latitude: 33.1092, longitude: 6.0332 },
     ...place
   });
   
@@ -120,40 +121,57 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                {t.address} ({editingLang.toUpperCase()})
-              </label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.latitude}</label>
               <input
-                type="text"
+                type="number"
+                step="any"
                 required
-                dir={isFormRtl ? 'rtl' : 'ltr'}
                 className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                placeholder="..."
-                value={formData.address?.[editingLang] || ''}
-                onChange={e => updateLocalized('address', e.target.value)}
+                value={formData.location?.latitude}
+                onChange={e => setFormData({ ...formData, location: { ...formData.location!, latitude: parseFloat(e.target.value) } })}
               />
             </div>
-             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.coordinates}</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  step="any"
-                  className="flex-1 px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                  value={formData.location?.lat}
-                  onChange={e => setFormData({ ...formData, location: { ...formData.location!, lat: parseFloat(e.target.value) } })}
-                />
-                <input
-                  type="number"
-                  step="any"
-                  className="flex-1 px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                  value={formData.location?.lng}
-                  onChange={e => setFormData({ ...formData, location: { ...formData.location!, lng: parseFloat(e.target.value) } })}
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.longitude}</label>
+              <input
+                type="number"
+                step="any"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                value={formData.location?.longitude}
+                onChange={e => setFormData({ ...formData, location: { ...formData.location!, longitude: parseFloat(e.target.value) } })}
+              />
             </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.rating} (0-5)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                value={formData.rating}
+                onChange={e => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {t.address} ({editingLang.toUpperCase()})
+            </label>
+            <input
+              type="text"
+              required
+              dir={isFormRtl ? 'rtl' : 'ltr'}
+              className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+              placeholder="..."
+              value={formData.address?.[editingLang] || ''}
+              onChange={e => updateLocalized('address', e.target.value)}
+            />
           </div>
 
           <div className="space-y-2 relative">

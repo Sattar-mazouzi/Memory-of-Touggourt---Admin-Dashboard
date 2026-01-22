@@ -41,6 +41,7 @@ export interface Place {
   location: Coordinates; 
   featured: boolean;
   rating: number; 
+  favoritesCount?: number; // New field for analytics
 }
 
 export interface HeritageData {
@@ -89,5 +90,8 @@ export interface CityStaff {
 export interface DashboardStats {
   totalPlaces: number;
   featuredPlaces: number;
+  totalUsers: number;
+  totalVisitors: number;
+  totalFavorites: number;
   categoriesCount: Record<string, number>;
 }

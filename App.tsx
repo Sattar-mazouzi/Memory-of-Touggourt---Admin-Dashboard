@@ -6,7 +6,7 @@ import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
-import { Place, AppLanguage, UserRole } from './types';
+import { Place, AppLanguage, UserRole, CityStaff } from './types';
 import { translations } from './translations';
 import { 
   onAuthStateChanged, 
@@ -51,7 +51,9 @@ import {
   Layers,
   Save,
   CheckCircle2,
-  Layout
+  Layout,
+  Heart,
+  Award
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -65,6 +67,7 @@ const App: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [places, setPlaces] = useState<Place[]>([]);
+  const [staffList, setStaffList] = useState<CityStaff[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -136,44 +139,73 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // Sync Places and Users for Analytics
   useEffect(() => {
     if (!user || !isAuthorized) {
       setDataLoading(false);
       setPlaces([]);
+      setStaffList([]);
       return;
     }
 
     setDataLoading(true);
-    const q = query(collection(db, "places"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    
+    const placesQ = query(collection(db, "places"));
+    const unsubPlaces = onSnapshot(placesQ, (snapshot) => {
       const placesList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Place[];
       setPlaces(placesList || []);
       setDataLoading(false);
-    }, (error) => {
-      console.error("Places Permission Error:", error);
-      setDataLoading(false);
     });
 
-    return () => unsubscribe();
+    const usersQ = query(collection(db, "users"));
+    const unsubUsers = onSnapshot(usersQ, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data()
+      })) as CityStaff[];
+      setStaffList(list || []);
+    });
+
+    return () => {
+      unsubPlaces();
+      unsubUsers();
+    };
   }, [user, isAuthorized]);
 
-  const statsData = [
-    { name: t.jan, visits: 400 }, { name: t.feb, visits: 300 },
-    { name: t.mar, visits: 600 }, { name: t.apr, visits: 800 },
-    { name: t.may, visits: 500 }, { name: t.jun, visits: 900 },
-  ];
+  // Analytics Calculations
+  const totalFavorites = useMemo(() => {
+    return places.reduce((acc, p) => acc + (p.favoritesCount || 0), 0);
+  }, [places]);
+
+  const mostFavoritedPlace = useMemo(() => {
+    if (places.length === 0) return null;
+    return [...places].sort((a, b) => (b.favoritesCount || 0) - (a.favoritesCount || 0))[0];
+  }, [places]);
+
+  const topPlaces = useMemo(() => {
+    return [...places]
+      .sort((a, b) => (b.favoritesCount || 0) - (a.favoritesCount || 0))
+      .slice(0, 5);
+  }, [places]);
 
   const categoryData = useMemo(() => {
     const list = places || [];
     const categories = ['religion', 'history', 'culture', 'nature', 'hotels', 'restaurants'];
     return categories.map(cat => ({
+      key: cat,
       name: t[cat as keyof typeof t] || cat,
       value: list.filter(p => p?.category === cat).length
     }));
   }, [places, t]);
+
+  const statsData = [
+    { name: t.jan, visits: 420 }, { name: t.feb, visits: 380 },
+    { name: t.mar, visits: 720 }, { name: t.apr, visits: 1100 },
+    { name: t.may, visits: 640 }, { name: t.jun, visits: 1350 },
+  ];
 
   const COLORS_PIE = ['#F97316', '#38BDF8', '#818CF8', '#F472B6', '#10B981', '#F59E0B'];
 
@@ -184,7 +216,8 @@ const App: React.FC = () => {
         await updateDoc(placeRef, { ...placeData });
       } else {
         await addDoc(collection(db, "places"), {
-          ...placeData
+          ...placeData,
+          favoritesCount: 0 // Initialize for new places
         });
       }
       setIsFormOpen(false);
@@ -357,7 +390,8 @@ const App: React.FC = () => {
         </div>
 
         {activeTab === 'dashboard' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-12">
+            {/* Mission Statement Header */}
             <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-8 rounded-[40px] text-white relative overflow-hidden shadow-2xl shadow-slate-200">
                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
@@ -377,58 +411,76 @@ const App: React.FC = () => {
                </div>
             </div>
 
+            {/* Dashboard Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { label: t.places, value: places?.length || 0, icon: <MapPin className="text-orange-500" />, trend: 'Live' },
-                { label: t.views, value: '12.4k', icon: <Eye className="text-blue-500" />, trend: '+5%' },
-                { label: t.subscribers, value: '2.8k', icon: <Users className="text-purple-500" />, trend: 'Stable' },
-                { label: t.systemStatus, value: 'Online', icon: <TrendingUp className="text-green-500" />, trend: 'Healthy' },
+                { label: t.totalPlaces, value: places.length, icon: <MapPin className="text-orange-500" />, color: 'orange' },
+                { label: t.registeredUsers, value: staffList.length, icon: <Users className="text-purple-500" />, color: 'purple' },
+                { label: t.totalVisitors, value: '18.2k', icon: <Eye className="text-blue-500" />, color: 'blue' },
+                { label: t.totalFavorites, value: totalFavorites, icon: <Heart className="text-pink-500" />, color: 'pink' },
               ].map((stat, i) => (
-                <div key={i} className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
+                <div key={i} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-slate-50 rounded-2xl">{stat.icon}</div>
-                    <span className="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full uppercase">
-                      {stat.trend}
-                    </span>
+                    <div className={`p-3 rounded-2xl bg-slate-50`}>{stat.icon}</div>
+                    <div className={`w-2 h-2 rounded-full bg-${stat.color}-500 animate-pulse`}></div>
                   </div>
-                  <h4 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</h4>
-                  <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
+                  <h4 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</h4>
+                  <p className="text-3xl font-black text-slate-800 tracking-tight">{stat.value}</p>
                 </div>
               ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 min-h-[400px]">
-                <h3 className="font-bold text-slate-800 text-lg mb-8">{t.visitorsOverview}</h3>
-                <div className="h-64 w-full">
+              {/* Visitors Bar Chart */}
+              <div className="lg:col-span-2 bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 min-h-[400px]">
+                <div className="flex justify-between items-center mb-8">
+                   <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight flex items-center gap-2">
+                     <TrendingUp className="text-orange-500" size={20} />
+                     {t.visitorsOverview}
+                   </h3>
+                   <div className="flex gap-2">
+                      <div className="flex items-center gap-1.5">
+                         <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                         <span className="text-[10px] font-bold text-slate-400 uppercase">Monthly Traffic</span>
+                      </div>
+                   </div>
+                </div>
+                <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={statsData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                      <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '16px', border: 'none'}} />
-                      <Bar dataKey="visits" fill="#F97316" radius={[4, 4, 0, 0]} barSize={40} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} />
+                      <Tooltip 
+                        cursor={{fill: '#F8FAFC'}} 
+                        contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', padding: '15px'}} 
+                      />
+                      <Bar dataKey="visits" fill="#F97316" radius={[12, 12, 0, 0]} barSize={40} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-                <h3 className="font-bold text-slate-800 text-lg mb-8">{t.categories}</h3>
-                <div className="h-64 w-full relative">
+              {/* Category Pie Chart & List */}
+              <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 flex flex-col">
+                <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight mb-8 flex items-center gap-2">
+                  <Layers className="text-orange-500" size={20} />
+                  {t.categories}
+                </h3>
+                <div className="h-56 w-full relative mb-8">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
+                        innerRadius={65}
+                        outerRadius={85}
+                        paddingAngle={8}
                         dataKey="value"
                       >
                         {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
+                          <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} stroke="transparent" />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -436,12 +488,105 @@ const App: React.FC = () => {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-800">{places?.length || 0}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{t.totalPlaces}</p>
+                      <p className="text-3xl font-black text-slate-800 tracking-tighter">{places.length}</p>
+                      <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{t.totalPlaces}</p>
                     </div>
                   </div>
                 </div>
+                
+                <div className="space-y-3 flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                  {categoryData.map((cat, idx) => (
+                    <div key={cat.key} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-100 transition-all">
+                       <div className="flex items-center gap-3">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS_PIE[idx % COLORS_PIE.length] }}></div>
+                          <span className="text-xs font-bold text-slate-600">{cat.name}</span>
+                       </div>
+                       <span className="text-xs font-black text-slate-800">{cat.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            {/* Favourites Ranking Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+               <div className="lg:col-span-8 bg-white p-10 rounded-[40px] shadow-sm border border-slate-100">
+                  <div className="flex justify-between items-center mb-10">
+                    <h3 className="font-black text-slate-800 text-xl uppercase tracking-tight flex items-center gap-2">
+                      <Heart className="text-pink-500" size={24} />
+                      {t.popularPlaces}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-6">
+                    {topPlaces.map((place, index) => (
+                       <div key={place.id} className="flex items-center justify-between group">
+                          <div className="flex items-center gap-6">
+                             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm ${index === 0 ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                               #{index + 1}
+                             </div>
+                             <div className="w-16 h-12 rounded-xl overflow-hidden shadow-sm">
+                                <img src={place.imageUrl.cover} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={place.name[currentLang]} />
+                             </div>
+                             <div>
+                                <h4 className="font-bold text-slate-800 leading-none mb-1 group-hover:text-orange-500 transition-colors">{place.name[currentLang]}</h4>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                                   <MapPin size={10} /> {place.address[currentLang] || 'Touggourt'}
+                                </p>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <div className="text-end">
+                                <p className="text-sm font-black text-slate-800 leading-none">{place.favoritesCount || 0}</p>
+                                <p className="text-[10px] font-bold text-pink-500 uppercase">{t.favorites}</p>
+                             </div>
+                             <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-pink-500 rounded-full" style={{ width: `${Math.min(100, ((place.favoritesCount || 0) / (mostFavoritedPlace?.favoritesCount || 1)) * 100)}%` }}></div>
+                             </div>
+                          </div>
+                       </div>
+                    ))}
+                    {topPlaces.length === 0 && (
+                      <div className="py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">No favorites recorded yet.</div>
+                    )}
+                  </div>
+               </div>
+
+               {/* Most Favorited Highlight */}
+               <div className="lg:col-span-4 space-y-8">
+                  {mostFavoritedPlace && (
+                    <div className="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-200 h-full flex flex-col">
+                       <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl"></div>
+                       <div className="relative z-10 flex-1">
+                          <div className="flex items-center gap-2 mb-6">
+                             <div className="px-3 py-1 bg-orange-500 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                                <Award size={12} /> {t.mostFavorited}
+                             </div>
+                          </div>
+                          
+                          <div className="aspect-video w-full rounded-3xl overflow-hidden mb-6 shadow-2xl border border-white/10">
+                             <img src={mostFavoritedPlace.imageUrl.cover} className="w-full h-full object-cover" alt="Popular" />
+                          </div>
+
+                          <h3 className="text-2xl font-black mb-2 leading-tight">{mostFavoritedPlace.name[currentLang]}</h3>
+                          <p className="text-slate-400 text-sm mb-8 line-clamp-3 leading-relaxed">
+                            {mostFavoritedPlace.description[currentLang]}
+                          </p>
+
+                          <div className="flex items-center gap-4 pt-6 border-t border-white/10">
+                             <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex-1">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t.favorites}</p>
+                                <p className="text-2xl font-black text-orange-400">{mostFavoritedPlace.favoritesCount || 0}</p>
+                             </div>
+                             <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex-1">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t.rating}</p>
+                                <p className="text-2xl font-black text-blue-400">{mostFavoritedPlace.rating?.toFixed(1) || '0.0'}</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  )}
+               </div>
             </div>
           </div>
         )}

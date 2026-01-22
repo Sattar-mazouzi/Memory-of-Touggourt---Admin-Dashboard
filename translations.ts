@@ -101,7 +101,15 @@ export const translations = {
     dunesImage: "صور الكثبان",
     uploadImage: "رفع صورة",
     uploading: "جاري الرفع...",
-    assetUrl: "رابط الأصل"
+    assetUrl: "رابط الأصل",
+
+    // New Analytics Strings
+    registeredUsers: "المستخدمون المسجلون",
+    totalVisitors: "إجمالي الزوار",
+    totalFavorites: "إجمالي التفضيلات",
+    mostFavorited: "الأكثر تفضيلاً",
+    favorites: "التفضيلات",
+    popularPlaces: "الأماكن الأكثر شعبية"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -202,7 +210,15 @@ export const translations = {
     dunesImage: "Dunes Image",
     uploadImage: "Upload Image",
     uploading: "Uploading...",
-    assetUrl: "Asset URL"
+    assetUrl: "Asset URL",
+
+    // New Analytics Strings
+    registeredUsers: "Registered Users",
+    totalVisitors: "Total Visitors",
+    totalFavorites: "Total Favorites",
+    mostFavorited: "Most Favorited",
+    favorites: "Favorites",
+    popularPlaces: "Popular Places"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -303,6 +319,14 @@ export const translations = {
     dunesImage: "Image Dunes",
     uploadImage: "Télécharger l'image",
     uploading: "Téléchargement...",
-    assetUrl: "URL de l'actif"
+    assetUrl: "URL de l'actif",
+
+    // New Analytics Strings
+    registeredUsers: "Utilisateurs Inscrits",
+    totalVisitors: "Total des Visiteurs",
+    totalFavorites: "Total des Favoris",
+    mostFavorited: "Le Plus Favori",
+    favorites: "Favoris",
+    popularPlaces: "Lieux Populaires"
   }
 };

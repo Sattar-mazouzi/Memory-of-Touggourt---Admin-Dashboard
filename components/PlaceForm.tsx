@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
-import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { Place, LocalizedText, AppLanguage } from '../types';
 import { translations } from '../translations';
+import { uploadImage } from '../services/cloudinaryService';
 
 interface PlaceFormProps {
   place?: Place;
@@ -11,15 +12,12 @@ interface PlaceFormProps {
   onClose: () => void;
 }
 
-// Cloudinary Configuration - Updated with user credentials
-// IMPORTANT: Ensure "touggourt_preset" is an UNSIGNED preset in your Cloudinary settings.
-const CLOUD_NAME = "dheayouzu"; 
-const UPLOAD_PRESET = "touggourt_preset"; 
-
 const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClose }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
   const t = translations[currentLang];
   const isFormRtl = editingLang === 'ar';
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<Partial<Place>>(() => {
     const defaults = {
@@ -55,58 +53,19 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     }));
   };
 
-  const handleCloudinaryUpload = () => {
-    // @ts-ignore
-    if (!window.cloudinary) {
-      alert("Cloudinary script not loaded yet. Please refresh the page.");
-      return;
-    }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    setIsUploading(true);
     try {
-      // @ts-ignore
-      const widget = window.cloudinary.createUploadWidget(
-        {
-          cloudName: CLOUD_NAME,
-          uploadPreset: UPLOAD_PRESET,
-          multiple: false,
-          resourceType: 'image',
-          clientAllowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
-          maxFileSize: 10000000, 
-          sources: ['local', 'url', 'camera'],
-          styles: {
-            palette: {
-              window: "#FFFFFF",
-              windowBorder: "#90A0B3",
-              tabIcon: "#F97316",
-              menuIcons: "#5A616A",
-              textDark: "#000000",
-              textLight: "#FFFFFF",
-              link: "#F97316",
-              action: "#F97316",
-              inactiveTabIcon: "#0E2F5A",
-              error: "#F44235",
-              inProgress: "#F97316",
-              complete: "#20B832",
-              sourceBg: "#E4EBF1"
-            }
-          }
-        },
-        (error: any, result: any) => {
-          if (error) {
-            console.error("Cloudinary Widget Execution Error:", error);
-          }
-          if (!error && result && result.event === "success") {
-            const uploadedUrl = result.info.secure_url;
-            console.log("Upload successful! New URL:", uploadedUrl);
-            // Directly replace the imageUrl in the form data
-            setFormData(prev => ({ ...prev, imageUrl: uploadedUrl }));
-          }
-        }
-      );
-      widget.open();
-    } catch (err) {
-      console.error("Failed to initialize Cloudinary Widget:", err);
-      alert("Unable to open upload tool. Please check your credentials.");
+      const url = await uploadImage(file);
+      setFormData(prev => ({ ...prev, imageUrl: url }));
+    } catch (err: any) {
+      alert(`Upload Failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -144,6 +103,15 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto scrollbar-hide">
+          {/* Hidden File Input */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            accept="image/*"
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -263,8 +231,13 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                   <ImageIcon size={40} className="text-slate-300" />
                 )}
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button type="button" onClick={handleCloudinaryUpload} className="p-2 bg-white rounded-full shadow-lg text-orange-600 hover:scale-110 transition-transform">
-                      <Upload size={20} />
+                    <button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()} 
+                      disabled={isUploading}
+                      className="p-2 bg-white rounded-full shadow-lg text-orange-600 hover:scale-110 transition-transform"
+                    >
+                      {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
                     </button>
                 </div>
               </div>
@@ -272,11 +245,12 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
               <div className="flex-1 space-y-4">
                 <button 
                   type="button"
-                  onClick={handleCloudinaryUpload}
-                  className="w-full flex items-center justify-center gap-2 py-4 bg-orange-100 text-orange-600 font-bold rounded-2xl hover:bg-orange-200 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-orange-100 text-orange-600 font-bold rounded-2xl hover:bg-orange-200 transition-colors disabled:opacity-50"
                 >
-                  <Upload size={20} />
-                  {t.uploadImage}
+                  {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+                  {isUploading ? t.uploading : t.uploadImage}
                 </button>
                 
                 <div className="relative">

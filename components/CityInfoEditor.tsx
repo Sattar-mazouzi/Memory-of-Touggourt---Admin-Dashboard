@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Save, Loader2, Image as ImageIcon, CheckCircle2, 
   History, Info, BookOpen, Globe, MapPin, CloudSun, Palette,
@@ -10,6 +10,7 @@ import {
 import { AppLanguage, CityArticle, LocalizedText, HeritageData } from '../types';
 import { translations } from '../translations';
 import { db, doc, getDoc, setDoc, collection, getDocs } from '../services/firebaseService';
+import { uploadImage } from '../services/cloudinaryService';
 
 interface CityInfoEditorProps {
   currentLang: AppLanguage;
@@ -22,11 +23,6 @@ interface ImageEditState {
   url: string;
 }
 
-// Cloudinary Configuration - Updated with user credentials
-// IMPORTANT: Ensure "touggourt_preset" is an UNSIGNED preset in your Cloudinary settings.
-const CLOUD_NAME = "dheayouzu"; 
-const UPLOAD_PRESET = "touggourt_preset"; 
-
 const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
   const t = translations[currentLang];
@@ -36,6 +32,8 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Modal State
   const [imageModal, setImageModal] = useState<ImageEditState>({
@@ -138,61 +136,31 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     });
   };
 
-  const handleCloudinaryUpload = () => {
-    // @ts-ignore
-    if (!window.cloudinary) {
-      alert("Cloudinary script not loaded yet. Please refresh the page.");
-      console.error("Cloudinary widget script (global/all.js) is missing from index.html");
-      return;
-    }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    setIsUploading(true);
+    const { field, subField } = imageModal;
     try {
-      // @ts-ignore
-      const widget = window.cloudinary.createUploadWidget(
-        {
-          cloudName: CLOUD_NAME,
-          uploadPreset: UPLOAD_PRESET,
-          multiple: false,
-          resourceType: 'image',
-          clientAllowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
-          maxFileSize: 10000000, // 10MB
-          showAdvancedOptions: false,
-          cropping: false,
-          sources: ['local', 'url', 'camera'],
-          styles: {
-            palette: {
-              window: "#FFFFFF",
-              windowBorder: "#90A0B3",
-              tabIcon: "#F97316",
-              menuIcons: "#5A616A",
-              textDark: "#000000",
-              textLight: "#FFFFFF",
-              link: "#F97316",
-              action: "#F97316",
-              inactiveTabIcon: "#0E2F5A",
-              error: "#F44235",
-              inProgress: "#F97316",
-              complete: "#20B832",
-              sourceBg: "#E4EBF1"
-            }
-          }
-        },
-        (error: any, result: any) => {
-          if (error) {
-            console.error("Cloudinary Widget Execution Error:", error);
-          }
-          if (!error && result && result.event === "success") {
-            const uploadedUrl = result.info.secure_url;
-            console.log("Upload successful! New URL:", uploadedUrl);
-            // Replace the URL in the modal preview immediately
-            setImageModal(prev => ({ ...prev, url: uploadedUrl }));
-          }
+      const url = await uploadImage(file);
+      // Update modal view
+      setImageModal(prev => ({ ...prev, url }));
+      // Update article state
+      setArticle(prev => {
+        if (!prev) return null;
+        if (field === 'gallery' && subField) {
+          return { ...prev, gallery: { ...prev.gallery, [subField]: url } };
+        } else {
+          // @ts-ignore
+          return { ...prev, [field]: url };
         }
-      );
-      widget.open();
-    } catch (err) {
-      console.error("Failed to initialize Cloudinary Widget:", err);
-      alert("There was an error opening the upload tool. Please check your internet connection.");
+      });
+    } catch (err: any) {
+      alert(`Upload Failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -275,7 +243,14 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept="image/*"
+      />
+
       {/* Floating Control Hub */}
       <div className="sticky top-6 z-50 flex justify-center w-full mb-12">
         <div className="bg-white/80 backdrop-blur-2xl px-6 py-3 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 flex items-center gap-8 animate-in slide-in-from-top-4 duration-500">
@@ -297,7 +272,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                     key={l}
                     onClick={() => setEditingLang(l)}
                     className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${
-                      editingLang === l ? 'bg-white text-orange-600 shadow-sm ring-1 ring-slate-100' : 'text-slate-400 hover:text-slate-600'
+                      editingLang === l ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     {l}
@@ -533,21 +508,24 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                     )}
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button 
-                          onClick={handleCloudinaryUpload}
-                          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-xl hover:scale-105 transition-transform"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-xl hover:scale-105 transition-transform disabled:opacity-50"
                         >
-                          <Upload size={18} /> {t.uploadImage}
+                          {isUploading ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />} 
+                          {isUploading ? t.uploading : t.uploadImage}
                         </button>
                     </div>
                  </div>
 
                  <div className="grid grid-cols-1 gap-4">
                     <button 
-                       onClick={handleCloudinaryUpload}
-                       className="w-full py-4 bg-orange-100 text-orange-600 font-black rounded-2xl hover:bg-orange-200 transition-all flex items-center justify-center gap-2"
+                       onClick={() => fileInputRef.current?.click()}
+                       disabled={isUploading}
+                       className="w-full py-4 bg-orange-100 text-orange-600 font-black rounded-2xl hover:bg-orange-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                       <Upload size={20} />
-                       {t.uploadImage}
+                       {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+                       {isUploading ? t.uploading : t.uploadImage}
                     </button>
 
                     <div className="relative">

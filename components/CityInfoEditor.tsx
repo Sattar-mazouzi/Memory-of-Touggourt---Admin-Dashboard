@@ -224,7 +224,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
           className="flex items-center gap-2 bg-white text-orange-600 px-5 py-2.5 rounded-2xl font-black shadow-2xl hover:scale-110 active:scale-95 transition-all"
         >
           <Edit2 size={18} />
-          <span className="text-xs uppercase tracking-widest">{t.save}</span>
+          <span className="text-xs uppercase tracking-widest">{t.edit}</span>
         </button>
       </div>
     </div>

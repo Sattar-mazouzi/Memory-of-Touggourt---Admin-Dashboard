@@ -22,13 +22,22 @@ export interface Coordinates {
   longitude: number;
 }
 
+export interface PlaceImages {
+  cover: string;
+  img1: string;
+  img2: string;
+  img3: string;
+  img4: string;
+  img5: string;
+}
+
 export interface Place {
   id: string;
   name: LocalizedText;
   address: LocalizedText;
   category: string; 
   description: LocalizedText;
-  imageUrl: string;
+  imageUrl: PlaceImages; 
   location: Coordinates; 
   featured: boolean;
   rating: number; 

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
-import { Place, LocalizedText, AppLanguage } from '../types';
+import { Place, LocalizedText, AppLanguage, PlaceImages } from '../types';
 import { translations } from '../translations';
 import { uploadImage } from '../services/cloudinaryService';
 
@@ -16,7 +16,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
   const t = translations[currentLang];
   const isFormRtl = editingLang === 'ar';
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingField, setUploadingField] = useState<keyof PlaceImages | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<Partial<Place>>(() => {
@@ -25,7 +25,14 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
       address: { ar: '', en: '', fr: '' },
       category: 'culture',
       description: { ar: '', en: '', fr: '' },
-      imageUrl: '',
+      imageUrl: {
+        cover: '',
+        img1: '',
+        img2: '',
+        img3: '',
+        img4: '',
+        img5: ''
+      },
       featured: false,
       rating: 4.5,
       location: { latitude: 33.1092, longitude: 6.0332 }
@@ -36,6 +43,10 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     return {
       ...defaults,
       ...place,
+      imageUrl: {
+        ...defaults.imageUrl,
+        ...(typeof place.imageUrl === 'object' ? place.imageUrl : { cover: place.imageUrl as unknown as string })
+      },
       location: {
         latitude: place.location?.latitude ?? defaults.location.latitude,
         longitude: place.location?.longitude ?? defaults.location.longitude,
@@ -55,18 +66,41 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !uploadingField) return;
 
-    setIsUploading(true);
+    const currentField = uploadingField;
+    setUploadingField(currentField); // Visual feedback
+    
     try {
       const url = await uploadImage(file);
-      setFormData(prev => ({ ...prev, imageUrl: url }));
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: {
+          ...(prev.imageUrl as PlaceImages),
+          [currentField]: url
+        }
+      }));
     } catch (err: any) {
       alert(`Upload Failed: ${err.message}`);
     } finally {
-      setIsUploading(false);
+      setUploadingField(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const triggerUpload = (field: keyof PlaceImages) => {
+    setUploadingField(field);
+    fileInputRef.current?.click();
+  };
+
+  const updateImageUrlManually = (field: keyof PlaceImages, url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: {
+        ...(prev.imageUrl as PlaceImages),
+        [field]: url
+      }
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,9 +108,18 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     onSave(formData);
   };
 
+  const imageSlots: { key: keyof PlaceImages; label: string }[] = [
+    { key: 'cover', label: t.coverImage },
+    { key: 'img1', label: `${t.image} 1` },
+    { key: 'img2', label: `${t.image} 2` },
+    { key: 'img3', label: `${t.image} 3` },
+    { key: 'img4', label: `${t.image} 4` },
+    { key: 'img5', label: `${t.image} 5` },
+  ];
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" dir={translations[currentLang] === translations.ar ? 'rtl' : 'ltr'}>
-      <div className="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-4xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
         <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold text-slate-800">
@@ -102,8 +145,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto scrollbar-hide">
-          {/* Hidden File Input */}
+        <form onSubmit={handleSubmit} className="p-8 space-y-8 overflow-y-auto scrollbar-hide">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -206,7 +248,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
             />
           </div>
 
-          <div className="space-y-2 relative">
+          <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               {t.description} ({editingLang.toUpperCase()})
             </label>
@@ -221,56 +263,63 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
             />
           </div>
 
-          <div className="space-y-4">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.image}</label>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-48 aspect-video md:aspect-square bg-slate-100 rounded-3xl overflow-hidden flex items-center justify-center shrink-0 border border-slate-200 shadow-inner group relative">
-                {formData.imageUrl ? (
-                  <img src={formData.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Preview" />
-                ) : (
-                  <ImageIcon size={40} className="text-slate-300" />
-                )}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button 
-                      type="button" 
-                      onClick={() => fileInputRef.current?.click()} 
-                      disabled={isUploading}
-                      className="p-2 bg-white rounded-full shadow-lg text-orange-600 hover:scale-110 transition-transform"
-                    >
-                      {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
-                    </button>
-                </div>
-              </div>
-              
-              <div className="flex-1 space-y-4">
-                <button 
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="w-full flex items-center justify-center gap-2 py-4 bg-orange-100 text-orange-600 font-bold rounded-2xl hover:bg-orange-200 transition-colors disabled:opacity-50"
-                >
-                  {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
-                  {isUploading ? t.uploading : t.uploadImage}
-                </button>
-                
-                <div className="relative">
-                  <div className={`absolute ${editingLang === 'ar' ? 'right-4' : 'left-4'} top-3.5 text-slate-300`}>
-                    <LinkIcon size={20} />
+          {/* New Multi-Image Management Section */}
+          <div className="space-y-6 pt-4 border-t border-slate-50">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                <ImageIcon className="text-orange-500" size={20} />
+                {t.managePlaces} - {t.exploreGallery}
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {imageSlots.map((slot) => (
+                <div key={slot.key} className="space-y-3">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{slot.label}</p>
+                  <div className={`relative ${slot.key === 'cover' ? 'aspect-video' : 'aspect-square'} rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 group shadow-sm`}>
+                    {formData.imageUrl?.[slot.key] ? (
+                      <img 
+                        src={formData.imageUrl[slot.key]} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        alt={slot.label} 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-300">
+                        <ImageIcon size={slot.key === 'cover' ? 40 : 24} />
+                      </div>
+                    )}
+                    
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-sm p-4">
+                      <button 
+                        type="button" 
+                        onClick={() => triggerUpload(slot.key)}
+                        disabled={!!uploadingField}
+                        className="w-full py-2 bg-white text-orange-600 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors"
+                      >
+                        {uploadingField === slot.key ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
+                        {uploadingField === slot.key ? t.uploading : t.uploadImage}
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="url"
-                    required
-                    className={`w-full ${editingLang === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'} py-3.5 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none text-sm font-medium`}
-                    placeholder="https://... or paste URL"
-                    value={formData.imageUrl}
-                    onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                  />
+                  
+                  <div className="relative group/input">
+                    <div className={`absolute ${isFormRtl ? 'right-3' : 'left-3'} top-2.5 text-slate-300`}>
+                      <LinkIcon size={14} />
+                    </div>
+                    <input 
+                      type="url"
+                      className={`w-full ${isFormRtl ? 'pr-9 pl-2' : 'pl-9 pr-2'} py-2 bg-slate-50 border border-transparent focus:border-orange-100 rounded-xl outline-none text-[10px] text-slate-500 font-medium`}
+                      placeholder="Paste URL..."
+                      value={formData.imageUrl?.[slot.key] || ''}
+                      onChange={e => updateImageUrlManually(slot.key, e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 py-2">
+          <div className="flex items-center gap-3 py-2 border-t border-slate-50 pt-8">
             <input
               type="checkbox"
               id="featured"

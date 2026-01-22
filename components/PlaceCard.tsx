@@ -19,12 +19,15 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
   const name = place.name?.[currentLang] || place.name?.en || place.name?.ar || 'Unnamed Place';
   const description = place.description?.[currentLang] || place.description?.en || place.description?.ar || '...';
   const address = place.address?.[currentLang] || place.address?.en || place.address?.ar || 'Touggourt';
+  
+  // Use cover image as primary thumbnail
+  const displayImage = place.imageUrl?.cover || 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800';
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
       <div className="relative h-48">
         <img 
-          src={place.imageUrl || 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800'} 
+          src={displayImage} 
           alt={name} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
-import { Place, LocalizedText, AppLanguage, PlaceImages } from '../types';
+import { Place, LocalizedText, AppLanguage, PlaceImages, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
 import { uploadImage } from '../services/cloudinaryService';
 
@@ -43,6 +43,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     return {
       ...defaults,
       ...place,
+      category: normalizeCategoryKey(place.category), // Ensure current value is normalized for the select dropdown
       imageUrl: {
         ...defaults.imageUrl,
         ...(typeof place.imageUrl === 'object' ? place.imageUrl : { cover: place.imageUrl as unknown as string })
@@ -69,7 +70,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     if (!file || !uploadingField) return;
 
     const currentField = uploadingField;
-    setUploadingField(currentField); // Visual feedback
+    setUploadingField(currentField); 
     
     try {
       const url = await uploadImage(file);
@@ -105,7 +106,12 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // Normalize category one last time before saving to DB
+    const finalData = {
+        ...formData,
+        category: normalizeCategoryKey(formData.category || 'culture')
+    };
+    onSave(finalData);
   };
 
   const imageSlots: { key: keyof PlaceImages; label: string }[] = [
@@ -263,7 +269,6 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
             />
           </div>
 
-          {/* New Multi-Image Management Section */}
           <div className="space-y-6 pt-4 border-t border-slate-50">
             <div className="flex items-center justify-between">
               <label className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">

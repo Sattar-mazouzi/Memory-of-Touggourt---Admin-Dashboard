@@ -11,6 +11,44 @@ export enum CategoryType {
   RESTAURANTS = 'restaurants'
 }
 
+/**
+ * Normalizes category strings from various sources (DB, old records, different languages)
+ * to a standardized internal key defined in CategoryType.
+ */
+export const normalizeCategoryKey = (raw: string): string => {
+  if (!raw) return 'culture';
+  const clean = raw.trim().toLowerCase();
+  
+  // Mapping of common variations to standard keys
+  const mapping: Record<string, string> = {
+    // English variations
+    'religion': 'religion', 'religious': 'religion',
+    'history': 'history', 'historical': 'history',
+    'culture': 'culture', 'cultural': 'culture',
+    'nature': 'nature', 'natural': 'nature',
+    'hotels': 'hotels', 'hotel': 'hotels',
+    'restaurants': 'restaurants', 'restaurant': 'restaurants',
+    
+    // Arabic variations
+    'ديني': 'religion',
+    'تاريخي': 'history',
+    'ثقافي': 'culture',
+    'طبيعي': 'nature',
+    'فنادق': 'hotels',
+    'مطاعم': 'restaurants',
+    
+    // French variations
+    'religieux': 'religion',
+    'historique': 'history',
+    'culturel': 'culture',
+    'naturel': 'nature',
+    'hôtels': 'hotels',
+    'restauration': 'restaurants'
+  };
+
+  return mapping[clean] || clean;
+};
+
 export interface LocalizedText {
   ar: string;
   en: string;
@@ -41,7 +79,7 @@ export interface Place {
   location: Coordinates; 
   featured: boolean;
   rating: number; 
-  favoritesCount?: number; // New field for analytics
+  favoritesCount?: number; 
 }
 
 export interface HeritageData {

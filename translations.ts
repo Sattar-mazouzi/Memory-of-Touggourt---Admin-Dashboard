@@ -109,7 +109,8 @@ export const translations = {
     totalFavorites: "إجمالي التفضيلات",
     mostFavorited: "الأكثر تفضيلاً",
     favorites: "التفضيلات",
-    popularPlaces: "الأماكن الأكثر شعبية"
+    popularPlaces: "الأماكن الأكثر شعبية",
+    allCategories: "كل الفئات"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -218,7 +219,8 @@ export const translations = {
     totalFavorites: "Total Favorites",
     mostFavorited: "Most Favorited",
     favorites: "Favorites",
-    popularPlaces: "Popular Places"
+    popularPlaces: "Popular Places",
+    allCategories: "All Categories"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -314,9 +316,9 @@ export const translations = {
     heritageFestivals: "Festivals",
     heritageGames: "Jeux Traditionnels",
     exploreGallery: "Galerie Photos",
-    architectureImage: "Image Architecture",
-    oasisImage: "Image Oasis",
-    dunesImage: "Image Dunes",
+    architectureImage: "Architecture Image",
+    oasisImage: "Oasis Image",
+    dunesImage: "Dunes Image",
     uploadImage: "Télécharger l'image",
     uploading: "Téléchargement...",
     assetUrl: "URL de l'actif",
@@ -327,6 +329,7 @@ export const translations = {
     totalFavorites: "Total des Favoris",
     mostFavorited: "Le Plus Favori",
     favorites: "Favoris",
-    popularPlaces: "Lieux Populaires"
+    popularPlaces: "Lieux Populaires",
+    allCategories: "Toutes les catégories"
   }
 };

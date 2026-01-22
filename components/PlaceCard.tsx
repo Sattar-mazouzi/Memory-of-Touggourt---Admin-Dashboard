@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Edit2, Trash2, Star, MapPin } from 'lucide-react';
-import { Place, AppLanguage } from '../types';
+import { Place, AppLanguage, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
 
 interface PlaceCardProps {
@@ -15,12 +15,14 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
 
-  // Use current selected language content with fallback
   const name = place.name?.[currentLang] || place.name?.en || place.name?.ar || 'Unnamed Place';
   const description = place.description?.[currentLang] || place.description?.en || place.description?.ar || '...';
   const address = place.address?.[currentLang] || place.address?.en || place.address?.ar || 'Touggourt';
   
-  // Use cover image as primary thumbnail
+  // Normalize the category key to ensure t[key] works correctly
+  const normalizedCat = normalizeCategoryKey(place.category);
+  const categoryLabel = t[normalizedCat as keyof typeof t] || place.category;
+  
   const displayImage = place.imageUrl?.cover || 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800';
 
   return (
@@ -60,7 +62,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-bold text-slate-800 text-lg leading-snug line-clamp-1">{name}</h3>
           <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-bold uppercase tracking-wider shrink-0 ml-2">
-            {t[place.category as keyof typeof t] || place.category}
+            {categoryLabel}
           </span>
         </div>
         <div className="flex items-center gap-1 text-slate-400 text-sm mb-3">

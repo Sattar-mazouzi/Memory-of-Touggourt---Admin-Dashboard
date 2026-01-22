@@ -6,7 +6,7 @@ import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
-import { Place, AppLanguage, UserRole, CityStaff } from './types';
+import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey } from './types';
 import { translations } from './translations';
 import { 
   onAuthStateChanged, 
@@ -53,7 +53,13 @@ import {
   CheckCircle2,
   Layout,
   Heart,
-  Award
+  Award,
+  Filter,
+  Church,
+  History,
+  Palmtree,
+  Hotel,
+  UtensilsCrossed
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -73,6 +79,7 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -83,6 +90,8 @@ const App: React.FC = () => {
 
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
+
+  const categoryKeys = ['religion', 'history', 'culture', 'nature', 'hotels', 'restaurants'];
 
   useEffect(() => {
     document.dir = isRtl ? 'rtl' : 'ltr';
@@ -193,11 +202,10 @@ const App: React.FC = () => {
 
   const categoryData = useMemo(() => {
     const list = places || [];
-    const categories = ['religion', 'history', 'culture', 'nature', 'hotels', 'restaurants'];
-    return categories.map(cat => ({
+    return categoryKeys.map(cat => ({
       key: cat,
       name: t[cat as keyof typeof t] || cat,
-      value: list.filter(p => p?.category === cat).length
+      value: list.filter(p => normalizeCategoryKey(p?.category) === cat).length
     }));
   }, [places, t]);
 
@@ -271,9 +279,15 @@ const App: React.FC = () => {
     return list.filter(p => {
       const nameCurrent = String(p?.name?.[currentLang] || '').toLowerCase();
       const addrCurrent = String(p?.address?.[currentLang] || '').toLowerCase();
-      return nameCurrent.includes(q) || addrCurrent.includes(q);
+      const matchesSearch = nameCurrent.includes(q) || addrCurrent.includes(q);
+      
+      // Standardize the category of the place before checking against the filter
+      const standardizedCat = normalizeCategoryKey(p.category);
+      const matchesCategory = selectedCategory === 'all' || standardizedCat === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
     });
-  }, [places, searchQuery, currentLang]);
+  }, [places, searchQuery, currentLang, selectedCategory]);
 
   const getDisplayName = () => {
     if (user?.full_name) return user.full_name;
@@ -283,6 +297,18 @@ const App: React.FC = () => {
   const getUserRoleLabel = (role: UserRole) => {
     if (role === 'admin') return t.adminRole;
     return t.managerRole;
+  };
+
+  const getCategoryIcon = (cat: string) => {
+    switch(cat) {
+      case 'religion': return <Church size={16} />;
+      case 'history': return <History size={16} />;
+      case 'culture': return <MapPin size={16} />;
+      case 'nature': return <Palmtree size={16} />;
+      case 'hotels': return <Hotel size={16} />;
+      case 'restaurants': return <UtensilsCrossed size={16} />;
+      default: return <Filter size={16} />;
+    }
   };
 
   if (authLoading) {
@@ -593,17 +619,47 @@ const App: React.FC = () => {
 
         {activeTab === 'places' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
-              <div>
+            <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
+              <div className="flex flex-col gap-1">
                 <h3 className="text-lg font-bold text-slate-800">{t.managePlaces}</h3>
-                <p className="text-sm text-slate-400">Add or edit database records in real-time</p>
+                <p className="text-sm text-slate-400">Manage your city's digital assets</p>
               </div>
-              <button 
-                onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }}
-                className="flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <Plus size={20} /> {t.newPlace}
-              </button>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto max-w-full scrollbar-hide">
+                  <button 
+                    onClick={() => setSelectedCategory('all')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                      selectedCategory === 'all' 
+                        ? 'bg-orange-500 text-white shadow-md' 
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    {t.allCategories}
+                  </button>
+                  {categoryKeys.map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        selectedCategory === cat 
+                          ? 'bg-orange-500 text-white shadow-md' 
+                          : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      {getCategoryIcon(cat)}
+                      {t[cat as keyof typeof t] || cat}
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }}
+                  className="flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                >
+                  <Plus size={20} /> {t.newPlace}
+                </button>
+              </div>
             </div>
 
             {dataLoading ? (
@@ -623,8 +679,11 @@ const App: React.FC = () => {
                   />
                 ))}
                 {filteredPlaces.length === 0 && !dataLoading && (
-                   <div className="col-span-full py-20 text-center">
-                      <p className="text-slate-400">{t.noRecords}</p>
+                   <div className="col-span-full py-20 text-center bg-white rounded-[40px] border border-slate-100 shadow-sm">
+                      <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                         <Search size={32} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">{t.noRecords}</p>
                    </div>
                 )}
               </div>

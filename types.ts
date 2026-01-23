@@ -55,6 +55,8 @@ export interface LocalizedText {
   fr: string;
 }
 
+export type CategoryMap = Record<string, LocalizedText>;
+
 export interface Coordinates {
   latitude: number;
   longitude: number;

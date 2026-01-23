@@ -1,17 +1,18 @@
 
 import React from 'react';
 import { Edit2, Trash2, Star, MapPin } from 'lucide-react';
-import { Place, AppLanguage, normalizeCategoryKey } from '../types';
+import { Place, AppLanguage, CategoryMap } from '../types';
 import { translations } from '../translations';
 
 interface PlaceCardProps {
   place: Place;
   currentLang: AppLanguage;
+  categories?: CategoryMap;
   onEdit: (place: Place) => void;
   onDelete: (id: string) => void;
 }
 
-const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDelete }) => {
+const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, onEdit, onDelete }) => {
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
 
@@ -19,9 +20,8 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, onEdit, onDel
   const description = place.description?.[currentLang] || place.description?.en || place.description?.ar || '...';
   const address = place.address?.[currentLang] || place.address?.en || place.address?.ar || 'Touggourt';
   
-  // Normalize the category key to ensure t[key] works correctly
-  const normalizedCat = normalizeCategoryKey(place.category);
-  const categoryLabel = t[normalizedCat as keyof typeof t] || place.category;
+  // Use dynamic category label if map exists, otherwise fallback to ID
+  const categoryLabel = categories?.[place.category]?.[currentLang] || place.category;
   
   const displayImage = place.imageUrl?.cover || 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800';
 

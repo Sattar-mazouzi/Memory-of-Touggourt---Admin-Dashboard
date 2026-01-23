@@ -1,18 +1,19 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
-import { Place, LocalizedText, AppLanguage, PlaceImages, normalizeCategoryKey } from '../types';
+import { Place, LocalizedText, AppLanguage, PlaceImages, normalizeCategoryKey, CategoryMap } from '../types';
 import { translations } from '../translations';
 import { uploadImage } from '../services/cloudinaryService';
 
 interface PlaceFormProps {
   place?: Place;
   currentLang: AppLanguage;
+  categories: CategoryMap;
   onSave: (place: Partial<Place>) => void;
   onClose: () => void;
 }
 
-const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClose }) => {
+const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, onSave, onClose }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
   const t = translations[currentLang];
   const isFormRtl = editingLang === 'ar';
@@ -20,10 +21,11 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<Partial<Place>>(() => {
+    const defaultCatKey = Object.keys(categories)[0] || 'culture';
     const defaults = {
       name: { ar: '', en: '', fr: '' },
       address: { ar: '', en: '', fr: '' },
-      category: 'culture',
+      category: defaultCatKey,
       description: { ar: '', en: '', fr: '' },
       imageUrl: {
         cover: '',
@@ -43,7 +45,6 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
     return {
       ...defaults,
       ...place,
-      category: normalizeCategoryKey(place.category), // Ensure current value is normalized for the select dropdown
       imageUrl: {
         ...defaults.imageUrl,
         ...(typeof place.imageUrl === 'object' ? place.imageUrl : { cover: place.imageUrl as unknown as string })
@@ -106,12 +107,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Normalize category one last time before saving to DB
-    const finalData = {
-        ...formData,
-        category: normalizeCategoryKey(formData.category || 'culture')
-    };
-    onSave(finalData);
+    onSave(formData);
   };
 
   const imageSlots: { key: keyof PlaceImages; label: string }[] = [
@@ -182,12 +178,11 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, onSave, onClo
                 value={formData.category}
                 onChange={e => setFormData({ ...formData, category: e.target.value })}
               >
-                <option value="religion">{t.religion}</option>
-                <option value="history">{t.history}</option>
-                <option value="culture">{t.culture}</option>
-                <option value="nature">{t.nature}</option>
-                <option value="hotels">{t.hotels}</option>
-                <option value="restaurants">{t.restaurants}</option>
+                {Object.entries(categories).map(([key, labels]) => (
+                  <option key={key} value={key}>
+                    {labels[currentLang] || key}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

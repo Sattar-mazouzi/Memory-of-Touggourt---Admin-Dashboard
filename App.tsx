@@ -6,7 +6,7 @@ import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
-import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey } from './types';
+import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
   onAuthStateChanged, 
@@ -59,8 +59,19 @@ import {
   History,
   Palmtree,
   Hotel,
-  UtensilsCrossed
+  UtensilsCrossed,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
+
+const DEFAULT_CATEGORIES: CategoryMap = {
+  religion: { ar: 'ديني', en: 'Religion', fr: 'Religieux' },
+  history: { ar: 'تاريخي', en: 'History', fr: 'Historique' },
+  culture: { ar: 'ثقافي', en: 'Culture', fr: 'Culturel' },
+  nature: { ar: 'طبيعي', en: 'Nature', fr: 'Naturel' },
+  hotels: { ar: 'فنادق', en: 'Hotels', fr: 'Hôtels' },
+  restaurants: { ar: 'مطاعم', en: 'Restaurants', fr: 'Restaurants' }
+};
 
 const App: React.FC = () => {
   const [currentLang, setCurrentLang] = useState<AppLanguage>(() => {
@@ -73,8 +84,10 @@ const App: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [places, setPlaces] = useState<Place[]>([]);
+  const [categories, setCategories] = useState<CategoryMap>(DEFAULT_CATEGORIES);
   const [staffList, setStaffList] = useState<CityStaff[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined);
@@ -91,7 +104,7 @@ const App: React.FC = () => {
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
 
-  const categoryKeys = ['religion', 'history', 'culture', 'nature', 'hotels', 'restaurants'];
+  const categoryKeys = useMemo(() => Object.keys(categories), [categories]);
 
   useEffect(() => {
     document.dir = isRtl ? 'rtl' : 'ltr';
@@ -148,41 +161,86 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Sync Places and Users for Analytics
+  // Sync Categories, Places and Users
   useEffect(() => {
     if (!user || !isAuthorized) {
       setDataLoading(false);
       setPlaces([]);
       setStaffList([]);
+      setCategories(DEFAULT_CATEGORIES);
       return;
     }
 
     setDataLoading(true);
+    setPermissionError(null);
     
-    const placesQ = query(collection(db, "places"));
-    const unsubPlaces = onSnapshot(placesQ, (snapshot) => {
-      const placesList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Place[];
-      setPlaces(placesList || []);
-      setDataLoading(false);
-    });
+    // Fetch Dynamic Categories with error handling
+    const unsubCategories = onSnapshot(doc(db, "appConfig", "categories"), 
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setCategories(snapshot.data() as CategoryMap);
+        } else {
+          setCategories(DEFAULT_CATEGORIES);
+        }
+      },
+      (error) => {
+        console.warn("Categories snapshot restricted, using defaults:", error.message);
+        setCategories(DEFAULT_CATEGORIES);
+        if (error.code === 'permission-denied') {
+          setPermissionError("Firestore Rules Error: Ensure 'appConfig' collection has read permissions set to 'true' in your Firebase console.");
+        }
+      }
+    );
 
-    const usersQ = query(collection(db, "users"));
-    const unsubUsers = onSnapshot(usersQ, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      })) as CityStaff[];
-      setStaffList(list || []);
-    });
+    const placesQ = query(collection(db, "places"));
+    const unsubPlaces = onSnapshot(placesQ, 
+      (snapshot) => {
+        const placesList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Place[];
+        setPlaces(placesList || []);
+        setDataLoading(false);
+      },
+      (error) => {
+        console.error("Places snapshot error:", error);
+        if (error.code === 'permission-denied') {
+          setPermissionError("Access Denied: Your account doesn't have permissions to read 'places'. Check Firestore rules.");
+        }
+        setDataLoading(false);
+      }
+    );
+
+    // Only admins can see the full user list
+    let unsubUsers = () => {};
+    if (user.role === 'admin') {
+      const usersQ = query(collection(db, "users"));
+      unsubUsers = onSnapshot(usersQ, 
+        (snapshot) => {
+          const list = snapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+          })) as CityStaff[];
+          setStaffList(list || []);
+        },
+        (error) => {
+          console.error("Users list restricted:", error);
+        }
+      );
+    } else {
+      setStaffList([{ uid: user.uid, email: user.email, full_name: user.full_name, role: user.role }]);
+    }
 
     return () => {
+      unsubCategories();
       unsubPlaces();
       unsubUsers();
     };
   }, [user, isAuthorized]);
+
+  const handleRetry = () => {
+    window.location.reload();
+  };
 
   // Analytics Calculations
   const totalFavorites = useMemo(() => {
@@ -204,10 +262,10 @@ const App: React.FC = () => {
     const list = places || [];
     return categoryKeys.map(cat => ({
       key: cat,
-      name: t[cat as keyof typeof t] || cat,
-      value: list.filter(p => normalizeCategoryKey(p?.category) === cat).length
+      name: categories[cat]?.[currentLang] || cat,
+      value: list.filter(p => p?.category === cat).length
     }));
-  }, [places, t]);
+  }, [places, categories, currentLang, categoryKeys]);
 
   const statsData = [
     { name: t.jan, visits: 420 }, { name: t.feb, visits: 380 },
@@ -225,13 +283,13 @@ const App: React.FC = () => {
       } else {
         await addDoc(collection(db, "places"), {
           ...placeData,
-          favoritesCount: 0 // Initialize for new places
+          favoritesCount: 0 
         });
       }
       setIsFormOpen(false);
       setEditingPlace(undefined);
-    } catch (err) {
-      alert("Failed to save record. Check permissions.");
+    } catch (err: any) {
+      alert(`Save failed: ${err.message || 'Permission denied'}`);
     }
   };
 
@@ -239,8 +297,9 @@ const App: React.FC = () => {
     if (confirm(t.deleteConfirm)) {
       try {
         await deleteDoc(doc(db, "places", id));
-      } catch (err) {
+      } catch (err: any) {
         console.error("Delete error:", err);
+        alert(`Delete failed: ${err.message || 'Permission denied'}`);
       }
     }
   };
@@ -267,7 +326,7 @@ const App: React.FC = () => {
       setTimeout(() => setShowProfileSuccess(false), 3000);
     } catch (err) {
       console.error("Failed to update profile", err);
-      alert("Update failed");
+      alert("Update failed: Check permissions.");
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -281,9 +340,7 @@ const App: React.FC = () => {
       const addrCurrent = String(p?.address?.[currentLang] || '').toLowerCase();
       const matchesSearch = nameCurrent.includes(q) || addrCurrent.includes(q);
       
-      // Standardize the category of the place before checking against the filter
-      const standardizedCat = normalizeCategoryKey(p.category);
-      const matchesCategory = selectedCategory === 'all' || standardizedCat === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
       
       return matchesSearch && matchesCategory;
     });
@@ -300,7 +357,8 @@ const App: React.FC = () => {
   };
 
   const getCategoryIcon = (cat: string) => {
-    switch(cat) {
+    const normalized = normalizeCategoryKey(cat);
+    switch(normalized) {
       case 'religion': return <Church size={16} />;
       case 'history': return <History size={16} />;
       case 'culture': return <MapPin size={16} />;
@@ -415,6 +473,25 @@ const App: React.FC = () => {
           </div>
         </div>
 
+        {permissionError && (
+          <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-[32px] flex flex-col md:flex-row items-center gap-6 text-amber-800 shadow-sm animate-in fade-in slide-in-from-top-4">
+            <div className="p-3 bg-amber-100 rounded-2xl">
+              <AlertTriangle className="shrink-0 text-amber-600" size={28} />
+            </div>
+            <div className="flex-1 text-center md:text-start">
+              <p className="text-lg font-black uppercase tracking-tight mb-1">Database Permission Warning</p>
+              <p className="text-sm font-medium opacity-80">{permissionError}</p>
+            </div>
+            <button 
+              onClick={handleRetry}
+              className="px-6 py-3 bg-white border border-amber-200 rounded-2xl text-amber-700 font-bold text-sm flex items-center gap-2 hover:bg-amber-100 transition-colors shadow-sm"
+            >
+              <RefreshCw size={16} />
+              Retry Connection
+            </button>
+          </div>
+        )}
+
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-12">
             {/* Mission Statement Header */}
@@ -464,12 +541,6 @@ const App: React.FC = () => {
                      <TrendingUp className="text-orange-500" size={20} />
                      {t.visitorsOverview}
                    </h3>
-                   <div className="flex gap-2">
-                      <div className="flex items-center gap-1.5">
-                         <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                         <span className="text-[10px] font-bold text-slate-400 uppercase">Monthly Traffic</span>
-                      </div>
-                   </div>
                 </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -573,13 +644,12 @@ const App: React.FC = () => {
                        </div>
                     ))}
                     {topPlaces.length === 0 && (
-                      <div className="py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">No favorites recorded yet.</div>
+                      <div className="py-20 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">No favorites recorded yet.</div>
                     )}
                   </div>
                </div>
 
-               {/* Most Favorited Highlight */}
-               <div className="lg:col-span-4 space-y-8">
+               <div className="lg:col-span-4">
                   {mostFavoritedPlace && (
                     <div className="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-200 h-full flex flex-col">
                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl"></div>
@@ -589,24 +659,11 @@ const App: React.FC = () => {
                                 <Award size={12} /> {t.mostFavorited}
                              </div>
                           </div>
-                          
-                          <div className="aspect-video w-full rounded-3xl overflow-hidden mb-6 shadow-2xl border border-white/10">
-                             <img src={mostFavoritedPlace.imageUrl.cover} className="w-full h-full object-cover" alt="Popular" />
-                          </div>
-
                           <h3 className="text-2xl font-black mb-2 leading-tight">{mostFavoritedPlace.name[currentLang]}</h3>
-                          <p className="text-slate-400 text-sm mb-8 line-clamp-3 leading-relaxed">
-                            {mostFavoritedPlace.description[currentLang]}
-                          </p>
-
-                          <div className="flex items-center gap-4 pt-6 border-t border-white/10">
+                          <div className="flex items-center gap-4 pt-6 border-t border-white/10 mt-auto">
                              <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex-1">
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t.favorites}</p>
                                 <p className="text-2xl font-black text-orange-400">{mostFavoritedPlace.favoritesCount || 0}</p>
-                             </div>
-                             <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex-1">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t.rating}</p>
-                                <p className="text-2xl font-black text-blue-400">{mostFavoritedPlace.rating?.toFixed(1) || '0.0'}</p>
                              </div>
                           </div>
                        </div>
@@ -624,7 +681,7 @@ const App: React.FC = () => {
                 <h3 className="text-lg font-bold text-slate-800">{t.managePlaces}</h3>
                 <p className="text-sm text-slate-400">Manage your city's digital assets</p>
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto max-w-full scrollbar-hide">
                   <button 
@@ -648,7 +705,7 @@ const App: React.FC = () => {
                       }`}
                     >
                       {getCategoryIcon(cat)}
-                      {t[cat as keyof typeof t] || cat}
+                      {categories[cat]?.[currentLang] || cat}
                     </button>
                   ))}
                 </div>
@@ -674,6 +731,7 @@ const App: React.FC = () => {
                     key={place.id} 
                     place={place} 
                     currentLang={currentLang}
+                    categories={categories}
                     onEdit={(p) => { setEditingPlace(p); setIsFormOpen(true); }}
                     onDelete={handleDeletePlace}
                   />
@@ -691,140 +749,30 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'aboutCity' && (
-           <CityInfoEditor currentLang={currentLang} />
-        )}
-
-        {activeTab === 'staff' && user?.role === 'admin' && (
-          <StaffManager currentLang={currentLang} />
-        )}
-
+        {activeTab === 'aboutCity' && <CityInfoEditor currentLang={currentLang} />}
+        {activeTab === 'staff' && user?.role === 'admin' && <StaffManager currentLang={currentLang} />}
         {activeTab === 'settings' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
-               <div className="h-32 bg-gradient-to-r from-orange-400 to-orange-600 relative">
-                  <div className={`absolute -bottom-12 ${isRtl ? 'right-12' : 'left-12'}`}>
-                    <img 
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || user?.email || 'Admin'}`} 
-                      className="w-24 h-24 rounded-3xl border-4 border-white shadow-xl bg-white" 
-                      alt="Profile" 
-                    />
-                  </div>
-               </div>
-               <div className={`pt-16 pb-12 px-12 space-y-8`}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-800 mb-1">{getDisplayName()}</h2>
-                      <p className="text-slate-400">{user?.email}</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-colors"
-                      >
-                        <LogOut size={20} /> {t.signOut}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-slate-50">
-                    <div className="space-y-8">
-                      <div className="flex items-center justify-between">
-                         <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                           <User className="text-orange-500" size={20} /> {t.updateProfile}
-                         </h3>
-                         {showProfileSuccess && (
-                            <div className="flex items-center gap-1.5 text-green-500 animate-in fade-in slide-in-from-right-2">
-                               <CheckCircle2 size={16} />
-                               <span className="text-xs font-bold uppercase">{t.profileUpdated}</span>
-                            </div>
-                         )}
-                      </div>
-                      
-                      <form onSubmit={handleUpdateProfile} className="space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.fullName}</label>
-                          <input 
-                            type="text"
-                            required
-                            className="w-full px-5 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none text-slate-700 font-medium"
-                            placeholder={t.fullName}
-                            value={profileFullName}
-                            onChange={e => setProfileFullName(e.target.value)}
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={isUpdatingProfile}
-                          className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
-                        >
-                          {isUpdatingProfile ? (
-                            <Loader2 size={24} className="animate-spin" />
-                          ) : (
-                            <>
-                              <Save size={20} />
-                              {t.saveChanges}
-                            </>
-                          )}
-                        </button>
-                      </form>
-
-                      <div className="space-y-6 pt-4">
-                        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                          <ShieldCheck className="text-orange-500" size={20} /> {t.accountInfo}
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="bg-slate-50 p-4 rounded-2xl">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.role}</p>
-                            <p className="font-bold text-slate-700">{getUserRoleLabel(user?.role)}</p>
-                          </div>
-                          <div className="bg-slate-50 p-4 rounded-2xl">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.lastLogin}</p>
-                            <p className="font-bold text-slate-700 flex items-center gap-2">
-                              <Calendar size={14} className="text-slate-400" />
-                              {new Date(user?.metadata?.lastSignInTime).toLocaleDateString(currentLang === 'ar' ? 'ar-DZ' : currentLang === 'fr' ? 'fr-FR' : 'en-US', { dateStyle: 'long' })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <Settings className="text-orange-500" size={20} /> {t.appName}
-                      </h3>
-                      <div className="bg-slate-50 p-8 rounded-[40px] border border-orange-50 shadow-inner">
-                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-orange-50">
-                           <span className="text-orange-500 font-black text-2xl">T</span>
-                        </div>
-                        <p className="text-slate-600 leading-relaxed font-medium">
-                           {translations[currentLang].appName} {translations[currentLang].adminPortal} is your central workspace for digital curation.
-                        </p>
-                        <ul className="mt-6 space-y-3">
-                           {[
-                             "Real-time tourism data sync",
-                             "Multi-language support (AR, EN, FR)",
-                             "Featured assets management"
-                           ].map((feature, idx) => (
-                             <li key={idx} className="flex items-center gap-2 text-sm text-slate-500">
-                                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-                                {feature}
-                             </li>
-                           ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'categories' && (
-          <div className="bg-white p-12 rounded-[40px] text-center shadow-sm border border-slate-100">
-             <Layers className="text-orange-500 animate-pulse mx-auto mb-6" size={48} />
-             <h2 className="text-2xl font-bold text-slate-800 mb-2">{t.categories}</h2>
-             <p className="text-slate-400">Advanced settings are coming soon.</p>
+          <div className="p-12 bg-white rounded-[40px] shadow-sm border border-slate-100">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">{t.settings}</h2>
+            <form onSubmit={handleUpdateProfile} className="max-w-md space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.fullName}</label>
+                <input 
+                  type="text"
+                  required
+                  className="w-full px-5 py-4 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none text-slate-700 font-medium"
+                  value={profileFullName}
+                  onChange={e => setProfileFullName(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isUpdatingProfile}
+                className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+              >
+                {isUpdatingProfile ? <Loader2 className="animate-spin" /> : <><Save size={20} /> {t.saveChanges}</>}
+              </button>
+            </form>
           </div>
         )}
       </main>
@@ -833,6 +781,7 @@ const App: React.FC = () => {
         <PlaceForm 
           place={editingPlace} 
           currentLang={currentLang}
+          categories={categories}
           onSave={handleSavePlace} 
           onClose={() => setIsFormOpen(false)} 
         />

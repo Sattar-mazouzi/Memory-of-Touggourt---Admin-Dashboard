@@ -6,6 +6,7 @@ import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
+import CategoryManager from './components/CategoryManager'; // New import
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
@@ -749,6 +750,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'categories' && <CategoryManager currentLang={currentLang} categories={categories} />}
         {activeTab === 'aboutCity' && <CityInfoEditor currentLang={currentLang} />}
         {activeTab === 'staff' && user?.role === 'admin' && <StaffManager currentLang={currentLang} />}
         {activeTab === 'settings' && (

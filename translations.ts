@@ -103,7 +103,15 @@ export const translations = {
     uploading: "جاري الرفع...",
     assetUrl: "رابط الأصل",
 
-    // New Analytics Strings
+    // Category Management
+    manageCategories: "إدارة التصنيفات",
+    newCategory: "تصنيف جديد",
+    categoryKey: "مفتاح التصنيف (بالإنجليزي)",
+    categoryName: "اسم التصنيف",
+    categoryDesc: "إضافة وتعديل فئات الأصول السياحية المتاحة في التطبيق.",
+    keyError: "المفتاح موجود بالفعل أو غير صالح.",
+
+    // Analytics Strings
     registeredUsers: "المستخدمون المسجلون",
     totalVisitors: "إجمالي الزوار",
     totalFavorites: "إجمالي التفضيلات",
@@ -212,6 +220,14 @@ export const translations = {
     uploadImage: "Upload Image",
     uploading: "Uploading...",
     assetUrl: "Asset URL",
+
+    // Category Management
+    manageCategories: "Manage Categories",
+    newCategory: "New Category",
+    categoryKey: "Category Key (Latin/ID)",
+    categoryName: "Category Name",
+    categoryDesc: "Add or update tourism asset categories available in the mobile app.",
+    keyError: "Key already exists or is invalid.",
 
     // New Analytics Strings
     registeredUsers: "Registered Users",
@@ -322,6 +338,14 @@ export const translations = {
     uploadImage: "Télécharger l'image",
     uploading: "Téléchargement...",
     assetUrl: "URL de l'actif",
+
+    // Category Management
+    manageCategories: "Gérer les Catégories",
+    newCategory: "Nouvelle Catégorie",
+    categoryKey: "Clé de Catégorie (ID)",
+    categoryName: "Nom de la Catégorie",
+    categoryDesc: "Ajouter ou mettre à jour les catégories d'actifs touristiques disponibles.",
+    keyError: "La clé existe déjà ou est invalide.",
 
     // New Analytics Strings
     registeredUsers: "Utilisateurs Inscrits",

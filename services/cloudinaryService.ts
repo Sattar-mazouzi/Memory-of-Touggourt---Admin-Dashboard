@@ -4,8 +4,8 @@
  * Centralized logic for direct image uploads via Cloudinary REST API.
  */
 
-const CLOUD_NAME = "dheayouzu"; 
-const UPLOAD_PRESET = "touggourt_perset"; 
+const CLOUD_NAME = "djgn1nqtk"; 
+const UPLOAD_PRESET = "touggourt_memory"; 
 
 /**
  * Uploads a file directly to Cloudinary using the REST API.

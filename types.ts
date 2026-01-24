@@ -82,6 +82,7 @@ export interface Place {
   featured: boolean;
   rating: number; 
   favoritesCount?: number; 
+  ratingCount?: number;
 }
 
 export interface HeritageData {

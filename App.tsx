@@ -289,7 +289,8 @@ const App: React.FC = () => {
       } else {
         await addDoc(collection(db, "places"), {
           ...placeData,
-          favoritesCount: 0 
+          favoritesCount: 0,
+          ratingCount: 0
         });
       }
       setIsFormOpen(false);

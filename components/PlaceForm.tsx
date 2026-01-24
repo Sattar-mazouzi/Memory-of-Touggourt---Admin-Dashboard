@@ -37,6 +37,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
       },
       featured: false,
       rating: 4.5,
+      ratingCount: 0,
       location: { latitude: 33.1092, longitude: 6.0332 }
     };
 

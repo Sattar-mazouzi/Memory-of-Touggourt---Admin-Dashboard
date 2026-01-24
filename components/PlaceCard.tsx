@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit2, Trash2, Star, MapPin } from 'lucide-react';
+import { Edit2, Trash2, Star, MapPin, Heart } from 'lucide-react';
 import { Place, AppLanguage, CategoryMap } from '../types';
 import { translations } from '../translations';
 
@@ -39,10 +39,16 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
               <Star size={12} fill="white" /> {t.featured}
             </div>
           )}
-          <div className="bg-white/90 backdrop-blur text-slate-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm w-fit border border-white/50">
-            <Star size={12} className="text-orange-500" fill="currentColor" /> 
-            {place.rating?.toFixed(1) || '0.0'}
-            <span className="text-[10px] text-slate-400 font-medium ml-1">({place.ratingCount || 0})</span>
+          <div className="flex gap-2">
+            <div className="bg-white/90 backdrop-blur text-slate-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm w-fit border border-white/50">
+              <Star size={12} className="text-orange-500" fill="currentColor" /> 
+              {place.rating?.toFixed(1) || '0.0'}
+              <span className="text-[10px] text-slate-400 font-medium ml-1">({place.ratingCount || 0})</span>
+            </div>
+            <div className="bg-white/90 backdrop-blur text-pink-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm w-fit border border-white/50">
+              <Heart size={12} fill="currentColor" /> 
+              {place.favoritesCount || 0}
+            </div>
           </div>
         </div>
         <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} flex gap-2`}>

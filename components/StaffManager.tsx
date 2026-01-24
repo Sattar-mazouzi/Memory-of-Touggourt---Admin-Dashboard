@@ -23,6 +23,7 @@ import {
   setDoc,
   query 
 } from '../services/firebaseService';
+import ConfirmModal from './ConfirmModal';
 
 interface StaffManagerProps {
   currentLang: AppLanguage;
@@ -41,6 +42,10 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffRole, setNewStaffRole] = useState<UserRole>('content manager');
   const [submitting, setSubmitting] = useState(false);
+
+  // Deletion Modal State
+  const [uidToDelete, setUidToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "users"));
@@ -93,14 +98,21 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
     }
   };
 
-  const handleDeleteStaff = async (uid: string) => {
-    if (confirm(t.deleteConfirm)) {
-      try {
-        await deleteDoc(doc(db, "users", uid));
-      } catch (err) {
-        console.error("Delete failed", err);
-        alert("Failed to delete staff member.");
-      }
+  const handleRequestDeleteStaff = (uid: string) => {
+    setUidToDelete(uid);
+  };
+
+  const executeDeleteStaff = async () => {
+    if (!uidToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "users", uidToDelete));
+      setUidToDelete(null);
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("Failed to delete staff member.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -166,7 +178,7 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-2">
                       <button 
-                        onClick={() => handleDeleteStaff(member.uid)}
+                        onClick={() => handleRequestDeleteStaff(member.uid)}
                         className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                       >
                         <Trash2 size={18} />
@@ -182,6 +194,16 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
           )}
         </div>
       )}
+
+      <ConfirmModal 
+        isOpen={!!uidToDelete}
+        onClose={() => setUidToDelete(null)}
+        onConfirm={executeDeleteStaff}
+        isLoading={isDeleting}
+        title={isRtl ? 'حذف الموظف' : 'Remove Staff Member'}
+        message={isRtl ? 'هل أنت متأكد من رغبتك في إزالة هذا الموظف من فريق العمل؟ لن يتمكن من الوصول إلى لوحة الإدارة بعد ذلك.' : 'Are you sure you want to remove this staff member? They will lose all administrative access immediately.'}
+        currentLang={currentLang}
+      />
 
       {/* Add Staff Modal */}
       {isAdding && (

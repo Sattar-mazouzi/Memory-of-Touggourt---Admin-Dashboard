@@ -15,6 +15,7 @@ import {
 import { AppLanguage, CategoryMap, LocalizedText, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
 import { db, doc, setDoc } from '../services/firebaseService';
+import ConfirmModal from './ConfirmModal';
 
 interface CategoryManagerProps {
   currentLang: AppLanguage;
@@ -33,6 +34,9 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
   const [newKey, setNewKey] = useState('');
   const [newName, setNewName] = useState<LocalizedText>({ ar: '', en: '', fr: '' });
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
+
+  // Deletion Modal State
+  const [keyToConfirmDelete, setKeyToConfirmDelete] = useState<string | null>(null);
 
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,18 +70,22 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
     }
   };
 
-  const handleDeleteCategory = async (e: React.MouseEvent, key: string) => {
+  const handleOpenDeleteConfirm = (e: React.MouseEvent, key: string) => {
     e.preventDefault();
     e.stopPropagation();
+    setKeyToConfirmDelete(key);
+  };
 
-    if (!window.confirm(t.deleteConfirm)) return;
+  const executeDeleteCategory = async () => {
+    if (!keyToConfirmDelete) return;
 
-    setDeletingKey(key);
+    setDeletingKey(keyToConfirmDelete);
     try {
       const updatedCategories = { ...categories };
-      delete updatedCategories[key];
+      delete updatedCategories[keyToConfirmDelete];
 
       await setDoc(doc(db, "appConfig", "categories"), updatedCategories);
+      setKeyToConfirmDelete(null);
     } catch (err: any) {
       console.error("Failed to delete category:", err);
       alert(err.message || "Failed to delete category.");
@@ -120,7 +128,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
                 </div>
                 <button 
                   type="button"
-                  onClick={(e) => handleDeleteCategory(e, key)}
+                  onClick={(e) => handleOpenDeleteConfirm(e, key)}
                   disabled={deletingKey !== null}
                   className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all disabled:opacity-30"
                   title={t.deleteConfirm}
@@ -158,6 +166,16 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={!!keyToConfirmDelete}
+        onClose={() => setKeyToConfirmDelete(null)}
+        onConfirm={executeDeleteCategory}
+        isLoading={deletingKey !== null}
+        title={isRtl ? 'حذف التصنيف' : 'Delete Category'}
+        message={isRtl ? `هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ سيؤدي ذلك إلى إزالته من جميع الأماكن المرتبطة.` : `Are you sure you want to delete this category? This will affect how places associated with it are displayed.`}
+        currentLang={currentLang}
+      />
 
       {isAdding && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">

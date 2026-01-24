@@ -6,7 +6,8 @@ import PlaceForm from './components/PlaceForm';
 import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
-import CategoryManager from './components/CategoryManager'; // New import
+import CategoryManager from './components/CategoryManager';
+import ConfirmModal from './components/ConfirmModal';
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
@@ -101,6 +102,10 @@ const App: React.FC = () => {
   const [profileFullName, setProfileFullName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [showProfileSuccess, setShowProfileSuccess] = useState(false);
+
+  // Deletion Modal State
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
+  const [isDeletingPlace, setIsDeletingPlace] = useState(false);
 
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
@@ -294,14 +299,21 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDeletePlace = async (id: string) => {
-    if (confirm(t.deleteConfirm)) {
-      try {
-        await deleteDoc(doc(db, "places", id));
-      } catch (err: any) {
-        console.error("Delete error:", err);
-        alert(`Delete failed: ${err.message || 'Permission denied'}`);
-      }
+  const handleRequestDeletePlace = (id: string) => {
+    setIdToDelete(id);
+  };
+
+  const executeDeletePlace = async () => {
+    if (!idToDelete) return;
+    setIsDeletingPlace(true);
+    try {
+      await deleteDoc(doc(db, "places", idToDelete));
+      setIdToDelete(null);
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      alert(`Delete failed: ${err.message || 'Permission denied'}`);
+    } finally {
+      setIsDeletingPlace(false);
     }
   };
 
@@ -734,7 +746,7 @@ const App: React.FC = () => {
                     currentLang={currentLang}
                     categories={categories}
                     onEdit={(p) => { setEditingPlace(p); setIsFormOpen(true); }}
-                    onDelete={handleDeletePlace}
+                    onDelete={handleRequestDeletePlace}
                   />
                 ))}
                 {filteredPlaces.length === 0 && !dataLoading && (
@@ -778,6 +790,16 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      <ConfirmModal 
+        isOpen={!!idToDelete}
+        onClose={() => setIdToDelete(null)}
+        onConfirm={executeDeletePlace}
+        isLoading={isDeletingPlace}
+        title={isRtl ? 'حذف الموقع' : 'Delete Place'}
+        message={isRtl ? 'هل أنت متأكد من رغبتك في حذف هذا الموقع السياحي؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this tourism asset? This action cannot be undone.'}
+        currentLang={currentLang}
+      />
 
       {isFormOpen && (
         <PlaceForm 

@@ -42,57 +42,52 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     url: ''
   });
 
-  const articleId = 'touggourt_main'; 
-
+  // Since we only have one document, we'll fetch the whole collection and take the first item
   useEffect(() => {
     const fetchArticle = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, 'aboutCity', articleId);
-        const docSnap = await getDoc(docRef);
+        const colRef = collection(db, 'aboutCity');
+        const querySnapshot = await getDocs(colRef);
         
-        if (docSnap.exists()) {
-          setArticle({ id: docSnap.id, ...docSnap.data() } as CityArticle);
+        if (!querySnapshot.empty) {
+          const firstDoc = querySnapshot.docs[0];
+          setArticle({ id: firstDoc.id, ...firstDoc.data() } as CityArticle);
         } else {
-          const colRef = collection(db, 'aboutCity');
-          const querySnapshot = await getDocs(colRef);
-          
-          if (!querySnapshot.empty) {
-            const firstDoc = querySnapshot.docs[0];
-            setArticle({ id: firstDoc.id, ...firstDoc.data() } as CityArticle);
-          } else {
-            const emptyLoc: LocalizedText = { ar: '', en: '', fr: '' };
-            const initialArticle: CityArticle = {
-              id: articleId,
-              name: { ar: 'توقرت', en: 'Touggourt', fr: 'Touggourt' },
-              population: 611345,
-              cover: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/cover.jpg',
-              location: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/touggourt_location.png',
-              bio: emptyLoc,
-              extendedBio: emptyLoc,
-              geography: emptyLoc,
-              histBio: emptyLoc,
-              extendedHistBio: emptyLoc,
-              climate: emptyLoc,
-              climateandTopography: emptyLoc,
-              heritage: {
-                industries: emptyLoc,
-                clothing: emptyLoc,
-                culinaryArts: emptyLoc,
-                folklore: emptyLoc,
-                festivals: emptyLoc,
-                games: emptyLoc
-              },
-              gallery: {
-                architecture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/architecture.jpg',
-                camel: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/camel.png',
-                culture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/culture.jpg',
-                dunes: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/dunes.jpg',
-                oasis: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/oasis.jpg'
-              }
-            };
-            setArticle(initialArticle);
-          }
+          // Initialize a default article if none exists
+          const emptyLoc: LocalizedText = { ar: '', en: '', fr: '' };
+          const articleId = 'touggourt_main'; // Fallback ID if creating new
+          const initialArticle: CityArticle = {
+            id: articleId,
+            name: { ar: 'توقرت', en: 'Touggourt', fr: 'Touggourt' },
+            population: 611345,
+            readingCount: 0,
+            cover: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/cover.jpg',
+            location: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/touggourt_location.png',
+            bio: emptyLoc,
+            extendedBio: emptyLoc,
+            geography: emptyLoc,
+            histBio: emptyLoc,
+            extendedHistBio: emptyLoc,
+            climate: emptyLoc,
+            climateandTopography: emptyLoc,
+            heritage: {
+              industries: emptyLoc,
+              clothing: emptyLoc,
+              culinaryArts: emptyLoc,
+              folklore: emptyLoc,
+              festivals: emptyLoc,
+              games: emptyLoc
+            },
+            gallery: {
+              architecture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/architecture.jpg',
+              camel: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/camel.png',
+              culture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/culture.jpg',
+              dunes: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/dunes.jpg',
+              oasis: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/oasis.jpg'
+            }
+          };
+          setArticle(initialArticle);
         }
       } catch (err) {
         console.error('Error fetching city article:', err);
@@ -144,9 +139,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     const { field, subField } = imageModal;
     try {
       const url = await uploadImage(file);
-      // Update modal view
       setImageModal(prev => ({ ...prev, url }));
-      // Update article state
       setArticle(prev => {
         if (!prev) return null;
         if (field === 'gallery' && subField) {

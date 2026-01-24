@@ -115,10 +115,14 @@ export const translations = {
     registeredUsers: "المستخدمون المسجلون",
     totalVisitors: "إجمالي الزوار",
     totalFavorites: "إجمالي التفضيلات",
+    totalRatings: "إجمالي التقييمات",
     mostFavorited: "الأكثر تفضيلاً",
     favorites: "التفضيلات",
     popularPlaces: "الأماكن الأكثر شعبية",
-    allCategories: "كل الفئات"
+    topRated: "الأعلى تقييماً",
+    reviews: "مراجعة",
+    allCategories: "كل الفئات",
+    cityReads: "قراءات دليل المدينة"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -233,10 +237,14 @@ export const translations = {
     registeredUsers: "Registered Users",
     totalVisitors: "Total Visitors",
     totalFavorites: "Total Favorites",
+    totalRatings: "Total Ratings",
     mostFavorited: "Most Favorited",
     favorites: "Favorites",
     popularPlaces: "Popular Places",
-    allCategories: "All Categories"
+    topRated: "Top Rated Places",
+    reviews: "Reviews",
+    allCategories: "All Categories",
+    cityReads: "City Guide Reads"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -351,9 +359,13 @@ export const translations = {
     registeredUsers: "Utilisateurs Inscrits",
     totalVisitors: "Total des Visiteurs",
     totalFavorites: "Total des Favoris",
+    totalRatings: "Total des Avis",
     mostFavorited: "Le Plus Favori",
     favorites: "Favoris",
     popularPlaces: "Lieux Populaires",
-    allCategories: "Toutes les catégories"
+    topRated: "Les Mieux Notés",
+    reviews: "Avis",
+    allCategories: "Toutes les catégories",
+    cityReads: "Lectures du Guide"
   }
 };

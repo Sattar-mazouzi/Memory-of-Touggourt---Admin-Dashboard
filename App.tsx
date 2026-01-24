@@ -63,7 +63,9 @@ import {
   Hotel,
   UtensilsCrossed,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Star,
+  BookOpen
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: CategoryMap = {
@@ -88,6 +90,7 @@ const App: React.FC = () => {
   const [places, setPlaces] = useState<Place[]>([]);
   const [categories, setCategories] = useState<CategoryMap>(DEFAULT_CATEGORIES);
   const [staffList, setStaffList] = useState<CityStaff[]>([]);
+  const [cityReads, setCityReads] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   
@@ -167,20 +170,21 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Sync Categories, Places and Users
+  // Sync Categories, Places, Users and City Info
   useEffect(() => {
     if (!user || !isAuthorized) {
       setDataLoading(false);
       setPlaces([]);
       setStaffList([]);
       setCategories(DEFAULT_CATEGORIES);
+      setCityReads(0);
       return;
     }
 
     setDataLoading(true);
     setPermissionError(null);
     
-    // Fetch Dynamic Categories with error handling
+    // Fetch Dynamic Categories
     const unsubCategories = onSnapshot(doc(db, "appConfig", "categories"), 
       (snapshot) => {
         if (snapshot.exists()) {
@@ -192,9 +196,19 @@ const App: React.FC = () => {
       (error) => {
         console.warn("Categories snapshot restricted, using defaults:", error.message);
         setCategories(DEFAULT_CATEGORIES);
-        if (error.code === 'permission-denied') {
-          setPermissionError("Firestore Rules Error: Ensure 'appConfig' collection has read permissions set to 'true' in your Firebase console.");
+      }
+    );
+
+    // Fetch City readingCount dynamically from the only document in aboutCity collection
+    const unsubCity = onSnapshot(collection(db, "aboutCity"), 
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const cityData = snapshot.docs[0].data();
+          setCityReads(cityData.readingCount || 0);
         }
+      },
+      (error) => {
+        console.error("City info snapshot error:", error);
       }
     );
 
@@ -241,6 +255,7 @@ const App: React.FC = () => {
       unsubCategories();
       unsubPlaces();
       unsubUsers();
+      unsubCity();
     };
   }, [user, isAuthorized]);
 
@@ -253,6 +268,10 @@ const App: React.FC = () => {
     return places.reduce((acc, p) => acc + (p.favoritesCount || 0), 0);
   }, [places]);
 
+  const totalRatings = useMemo(() => {
+    return places.reduce((acc, p) => acc + (p.ratingCount || 0), 0);
+  }, [places]);
+
   const mostFavoritedPlace = useMemo(() => {
     if (places.length === 0) return null;
     return [...places].sort((a, b) => (b.favoritesCount || 0) - (a.favoritesCount || 0))[0];
@@ -261,6 +280,12 @@ const App: React.FC = () => {
   const topPlaces = useMemo(() => {
     return [...places]
       .sort((a, b) => (b.favoritesCount || 0) - (a.favoritesCount || 0))
+      .slice(0, 5);
+  }, [places]);
+
+  const topRatedPlaces = useMemo(() => {
+    return [...places]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
       .slice(0, 5);
   }, [places]);
 
@@ -529,12 +554,14 @@ const App: React.FC = () => {
             </div>
 
             {/* Dashboard Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
               {[
                 { label: t.totalPlaces, value: places.length, icon: <MapPin className="text-orange-500" />, color: 'orange' },
                 { label: t.registeredUsers, value: staffList.length, icon: <Users className="text-purple-500" />, color: 'purple' },
-                { label: t.totalVisitors, value: '18.2k', icon: <Eye className="text-blue-500" />, color: 'blue' },
                 { label: t.totalFavorites, value: totalFavorites, icon: <Heart className="text-pink-500" />, color: 'pink' },
+                { label: t.totalRatings, value: totalRatings, icon: <Star className="text-yellow-500" />, color: 'yellow' },
+                { label: t.cityReads, value: cityReads, icon: <BookOpen className="text-emerald-500" />, color: 'emerald' },
+                { label: t.totalVisitors, value: '18.2k', icon: <Eye className="text-blue-500" />, color: 'blue' },
               ].map((stat, i) => (
                 <div key={i} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
@@ -619,16 +646,14 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Favourites Ranking Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-               <div className="lg:col-span-8 bg-white p-10 rounded-[40px] shadow-sm border border-slate-100">
-                  <div className="flex justify-between items-center mb-10">
-                    <h3 className="font-black text-slate-800 text-xl uppercase tracking-tight flex items-center gap-2">
-                      <Heart className="text-pink-500" size={24} />
-                      {t.popularPlaces}
-                    </h3>
-                  </div>
-
+            {/* Rankings Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               {/* Popular Places */}
+               <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100">
+                  <h3 className="font-black text-slate-800 text-xl uppercase tracking-tight mb-10 flex items-center gap-2">
+                    <Heart className="text-pink-500" size={24} />
+                    {t.popularPlaces}
+                  </h3>
                   <div className="space-y-6">
                     {topPlaces.map((place, index) => (
                        <div key={place.id} className="flex items-center justify-between group">
@@ -651,38 +676,42 @@ const App: React.FC = () => {
                                 <p className="text-sm font-black text-slate-800 leading-none">{place.favoritesCount || 0}</p>
                                 <p className="text-[10px] font-bold text-pink-500 uppercase">{t.favorites}</p>
                              </div>
-                             <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-pink-500 rounded-full" style={{ width: `${Math.min(100, ((place.favoritesCount || 0) / (mostFavoritedPlace?.favoritesCount || 1)) * 100)}%` }}></div>
+                          </div>
+                       </div>
+                    ))}
+                  </div>
+               </div>
+
+               {/* Top Rated Places */}
+               <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100">
+                  <h3 className="font-black text-slate-800 text-xl uppercase tracking-tight mb-10 flex items-center gap-2">
+                    <Star className="text-yellow-500" size={24} fill="currentColor" />
+                    {t.topRated}
+                  </h3>
+                  <div className="space-y-6">
+                    {topRatedPlaces.map((place, index) => (
+                       <div key={place.id} className="flex items-center justify-between group">
+                          <div className="flex items-center gap-6">
+                             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm ${index === 0 ? 'bg-yellow-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                               #{index + 1}
+                             </div>
+                             <div className="w-16 h-12 rounded-xl overflow-hidden shadow-sm">
+                                <img src={place.imageUrl.cover} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={place.name[currentLang]} />
+                             </div>
+                             <div>
+                                <h4 className="font-bold text-slate-800 leading-none mb-1 group-hover:text-yellow-600 transition-colors">{place.name[currentLang]}</h4>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                   <div className="flex items-center gap-0.5">
+                                      <Star size={10} className="text-yellow-500" fill="currentColor" />
+                                      <span className="text-xs font-black text-slate-800">{place.rating?.toFixed(1) || '0.0'}</span>
+                                   </div>
+                                   <span className="text-[10px] text-slate-400 font-bold">({place.ratingCount || 0} {t.reviews})</span>
+                                </div>
                              </div>
                           </div>
                        </div>
                     ))}
-                    {topPlaces.length === 0 && (
-                      <div className="py-20 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">No favorites recorded yet.</div>
-                    )}
                   </div>
-               </div>
-
-               <div className="lg:col-span-4">
-                  {mostFavoritedPlace && (
-                    <div className="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-200 h-full flex flex-col">
-                       <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl"></div>
-                       <div className="relative z-10 flex-1">
-                          <div className="flex items-center gap-2 mb-6">
-                             <div className="px-3 py-1 bg-orange-500 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg">
-                                <Award size={12} /> {t.mostFavorited}
-                             </div>
-                          </div>
-                          <h3 className="text-2xl font-black mb-2 leading-tight">{mostFavoritedPlace.name[currentLang]}</h3>
-                          <div className="flex items-center gap-4 pt-6 border-t border-white/10 mt-auto">
-                             <div className="p-4 bg-white/5 rounded-3xl border border-white/5 flex-1">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{t.favorites}</p>
-                                <p className="text-2xl font-black text-orange-400">{mostFavoritedPlace.favoritesCount || 0}</p>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                  )}
                </div>
             </div>
           </div>

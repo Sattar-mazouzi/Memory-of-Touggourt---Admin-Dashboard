@@ -106,6 +106,7 @@ export interface CityArticle {
   id: string;
   name: LocalizedText;
   population: number;
+  readingCount?: number; // Added field for analytics
   cover: string;
   location: string; // map image url
   bio: LocalizedText;

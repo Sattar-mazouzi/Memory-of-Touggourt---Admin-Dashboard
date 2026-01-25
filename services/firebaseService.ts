@@ -19,60 +19,71 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy
+  orderBy,
+  increment,
+  writeBatch,
+  limit,
+  serverTimestamp,
+  documentId
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /**
  * =========================================================================
- * FIRESTORE SECURITY RULES (COPY & PASTE TO FIREBASE CONSOLE):
+ * UPDATED FIRESTORE SECURITY RULES (COPY & PASTE TO FIREBASE CONSOLE):
  * =========================================================================
  * 
  * rules_version = '2';
  * service cloud.firestore {
  *   match /databases/{database}/documents {
- *     
- *     // Helper: Check if user has a staff role (admin or content manager)
- *     function isStaff() {
- *       return request.auth != null && 
- *         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
- *         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'content manager']);
+ *
+ *     // HELPER FUNCTIONS
+ *     function isSignedIn() { return request.auth != null; }
+ *     function getUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+ *     function isStaff() { return isSignedIn() && (getUserData().role == 'admin' || getUserData().role == 'content manager'); }
+ *     function isAdmin() { return isSignedIn() && getUserData().role == 'admin'; }
+ *
+ *     // STATS TRACKING 
+ *     match /appStats/global {
+ *       allow read: if true;
+ *       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalSessions']);
+ *     }
+ *     match /dailyStats/{date} {
+ *       // IMPORTANT: Changed 'isAdmin()' to 'isStaff()' so managers can see the graph too!
+ *       allow read: if isStaff();
+ *       // Allow public creation and increment of count
+ *       allow create, update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count']);
  *     }
  *
- *     // Helper: Check if user is an admin
- *     function isAdmin() {
- *       return request.auth != null && 
- *         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
- *         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+ *     // REST OF YOUR RULES... (Keep the ones you already have)
+ *     match /places/{placeId} {
+ *       allow read: if true;
+ *       allow write: if isStaff();
+ *       allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingCount', 'favoritesCount']);
  *     }
- *
- *     // Users collection
- *     match /users/{userId} {
- *       allow read: if request.auth != null;
- *       allow write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+ *     match /aboutCity/{docId} {
+ *       allow read: if true;
+ *       allow write: if isStaff();
+ *       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readingCount']);
  *     }
- *
- *     // App Configuration (Categories, etc.) - PUBLIC READ
  *     match /appConfig/{configId} {
  *       allow read: if true;
  *       allow write: if isAdmin();
  *     }
- *
- *     // Places collection - PUBLIC READ, STAFF WRITE
- *     match /places/{placeId} {
- *       allow read: if true;
- *       allow write: if isStaff();
+ *     match /users/{userId} {
+ *       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+ *       allow list: if isAdmin();
+ *       allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.role == 'visitor';
+ *       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role);
  *     }
- *
- *     // About City articles - PUBLIC READ, STAFF WRITE
- *     match /aboutCity/{articleId} {
+ *     match /reviews/{reviewId} {
  *       allow read: if true;
- *       allow write: if isStaff();
+ *       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+ *       allow update, delete: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
  *     }
  *   }
  * }
  */
 
-// Touggourt Memory Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAw7HKjC_T9j77JC-oPL8Id6P9Z7SGbBhQ",
   authDomain: "touggourtmemory.firebaseapp.com",
@@ -83,10 +94,7 @@ const firebaseConfig = {
   measurementId: "G-PSK62Z130E"
 };
 
-// Initialize Firebase once
 const app = initializeApp(firebaseConfig);
-
-// Initialize and export services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
@@ -105,5 +113,10 @@ export {
   onSnapshot,
   query,
   where,
-  orderBy
+  orderBy,
+  increment,
+  writeBatch,
+  limit,
+  serverTimestamp,
+  documentId
 };

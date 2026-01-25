@@ -9,6 +9,7 @@ import LoginPage from './components/LoginPage';
 import CategoryManager from './components/CategoryManager';
 import ConfirmModal from './components/ConfirmModal';
 import VisitorAnalytics from './components/VisitorAnalytics';
+import ProfileEditor from './components/ProfileEditor';
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
@@ -74,7 +75,7 @@ const App: React.FC = () => {
     return (localStorage.getItem('admin_lang') as AppLanguage) || 'ar';
   });
   
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<CityStaff | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(true);
   
@@ -94,10 +95,6 @@ const App: React.FC = () => {
   
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-
-  const [profileFullName, setProfileFullName] = useState('');
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [showProfileSuccess, setShowProfileSuccess] = useState(false);
 
   // Deletion Modal State
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
@@ -131,12 +128,18 @@ const App: React.FC = () => {
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
-            const userData = { ...currentUser, ...userDoc.data() };
-            const role = userData.role;
+            const data = userDoc.data();
+            const userData: CityStaff = {
+              uid: currentUser.uid,
+              email: currentUser.email || '',
+              fullName: data.fullName || data.full_name || 'Admin', // Support migration
+              age: data.age,
+              role: data.role as UserRole,
+              lastLogin: data.lastLogin
+            };
             
-            if (role === 'admin' || role === 'content manager') {
+            if (userData.role === 'admin' || userData.role === 'content manager') {
               setUser(userData);
-              setProfileFullName(userData.full_name || '');
               setIsAuthorized(true);
             } else {
               setIsAuthorized(false);
@@ -230,13 +233,14 @@ const App: React.FC = () => {
         (snapshot) => {
           const list = snapshot.docs.map(doc => ({
             uid: doc.id,
-            ...doc.data()
+            ...doc.data(),
+            fullName: doc.data().fullName || doc.data().full_name // Migration support
           })) as CityStaff[];
           setStaffList(list || []);
         }
       );
     } else {
-      setStaffList([{ uid: user.uid, email: user.email, full_name: user.full_name, role: user.role }]);
+      setStaffList([user]);
     }
 
     return () => {
@@ -347,17 +351,21 @@ const App: React.FC = () => {
             
             <div className="relative" ref={profileRef}>
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100">
-                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.full_name || 'Admin'}`} className="w-8 h-8 rounded-full" alt="Admin" />
+                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.fullName || 'Admin'}`} className="w-8 h-8 rounded-full" alt="Admin" />
                 <div className="flex flex-col text-start max-w-[120px]">
-                  <span className="text-xs font-bold text-slate-700 leading-none truncate">{user?.full_name || 'Admin'}</span>
+                  <span className="text-xs font-bold text-slate-700 leading-none truncate">{user?.fullName || 'Admin'}</span>
                   <span className="text-[10px] text-orange-500 font-bold uppercase">{getUserRoleLabel(user?.role)}</span>
                 </div>
                 <ChevronDown size={14} className="text-slate-400" />
               </button>
               {isProfileOpen && (
                 <div className={`absolute top-full mt-2 ${isRtl ? 'left-0' : 'right-0'} w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50`}>
-                  <div className="p-4 border-b border-slate-50"><p className="text-sm font-bold text-slate-800 truncate">{user?.email}</p></div>
-                  <div className="p-2">
+                  <div className="p-4 border-b border-slate-50">
+                    <p className="text-sm font-bold text-slate-800 truncate">{user?.email}</p>
+                    {user?.age && <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{t.age}: {user.age}</p>}
+                  </div>
+                  <div className="p-2 space-y-1">
+                    <button onClick={() => { setActiveTab('settings'); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"><Settings size={18} /> {t.profile}</button>
                     <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"><LogOut size={18} /> {t.signOut}</button>
                   </div>
                 </div>
@@ -372,7 +380,7 @@ const App: React.FC = () => {
                <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                      <div className="p-2 bg-white/10 backdrop-blur rounded-xl"><Layout className="text-orange-400" size={24} /></div>
-                     <h3 className="text-xl md:text-2xl font-bold">{t.welcomeAdmin} {user?.full_name || 'Admin'}!</h3>
+                     <h3 className="text-xl md:text-2xl font-bold">{t.welcomeAdmin} {user?.fullName || 'Admin'}!</h3>
                   </div>
                   <p className="text-slate-300 max-w-lg font-medium">{t.dashboardSubtitle}</p>
                </div>
@@ -471,6 +479,13 @@ const App: React.FC = () => {
         {activeTab === 'categories' && <CategoryManager currentLang={currentLang} categories={categories} />}
         {activeTab === 'aboutCity' && <CityInfoEditor currentLang={currentLang} />}
         {activeTab === 'staff' && user?.role === 'admin' && <StaffManager currentLang={currentLang} />}
+        {activeTab === 'settings' && user && (
+          <ProfileEditor 
+            currentLang={currentLang} 
+            user={user} 
+            onUpdate={(updates) => setUser(prev => prev ? ({ ...prev, ...updates }) : null)} 
+          />
+        )}
       </main>
 
       <ConfirmModal 

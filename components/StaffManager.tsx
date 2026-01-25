@@ -9,7 +9,8 @@ import {
   Trash2, 
   Loader2,
   CheckCircle2,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
 import { AppLanguage, CityStaff, UserRole } from '../types';
 import { translations } from '../translations';
@@ -52,7 +53,8 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const list = snapshot.docs.map(doc => ({
         uid: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        fullName: doc.data().fullName || doc.data().full_name // Migration support
       })) as CityStaff[];
       setStaffList(list);
       setLoading(false);
@@ -74,7 +76,7 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
       const dummyId = `user_${Date.now()}`;
       await setDoc(doc(db, "users", dummyId), {
         email: newStaffEmail,
-        full_name: newStaffName,
+        fullName: newStaffName, // Using new fullName field
         role: newStaffRole,
         created_at: new Date().toISOString()
       });
@@ -149,6 +151,7 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
               <tr>
                 <th className={`px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-start`}>{t.fullName}</th>
                 <th className={`px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-start`}>{t.email}</th>
+                <th className={`px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-start`}>{t.age}</th>
                 <th className={`px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-start`}>{t.role}</th>
                 <th className={`px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center`}>{t.actions}</th>
               </tr>
@@ -159,12 +162,13 @@ const StaffManager: React.FC<StaffManagerProps> = ({ currentLang }) => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                        {member.full_name?.charAt(0) || '?'}
+                        {member.fullName?.charAt(0) || '?'}
                       </div>
-                      <span className="font-bold text-slate-700">{member.full_name}</span>
+                      <span className="font-bold text-slate-700">{member.fullName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-slate-500 text-sm font-medium">{member.email}</td>
+                  <td className="px-6 py-4 text-slate-500 text-sm font-bold">{member.age || '-'}</td>
                   <td className="px-6 py-4">
                     <select
                       value={member.role}

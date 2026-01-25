@@ -124,7 +124,8 @@ export interface CityArticle {
 export interface CityStaff {
   uid: string;
   email: string;
-  full_name: string;
+  fullName: string; // Changed from full_name
+  age?: number;     // Added age
   role: UserRole;
   lastLogin?: any;
 }

@@ -40,7 +40,7 @@ export const translations = {
     subscribers: "المشتركين",
     systemStatus: "حالة النظام",
     loading: "جاري التحميل...",
-    noRecords: "لم يتم العخور على سجلات مطابقة.",
+    noRecords: "لم يتم العثور على سجلات مطابقة.",
     deleteConfirm: "هل تريد حذف هذا السجل؟",
     name: "الاسم",
     address: "العنوان",

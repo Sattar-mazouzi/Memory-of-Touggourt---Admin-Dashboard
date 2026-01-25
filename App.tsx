@@ -58,7 +58,9 @@ import {
   AlertTriangle,
   RefreshCw,
   Star,
-  BookOpen
+  BookOpen,
+  Compass,
+  X
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: CategoryMap = {
@@ -301,7 +303,25 @@ const App: React.FC = () => {
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return places.filter(p => {
-      const matchesSearch = (p?.name?.[currentLang] || '').toLowerCase().includes(q) || (p?.address?.[currentLang] || '').toLowerCase().includes(q);
+      // Search in Name
+      const nameMatch = (p?.name?.[currentLang] || '').toLowerCase().includes(q) || 
+                        (p?.name?.en || '').toLowerCase().includes(q) ||
+                        (p?.name?.ar || '').toLowerCase().includes(q) ||
+                        (p?.name?.fr || '').toLowerCase().includes(q);
+      
+      // Search in Address
+      const addressMatch = (p?.address?.[currentLang] || '').toLowerCase().includes(q) ||
+                           (p?.address?.en || '').toLowerCase().includes(q) ||
+                           (p?.address?.ar || '').toLowerCase().includes(q) ||
+                           (p?.address?.fr || '').toLowerCase().includes(q);
+
+      // Search in Description
+      const descMatch = (p?.description?.[currentLang] || '').toLowerCase().includes(q) ||
+                        (p?.description?.en || '').toLowerCase().includes(q) ||
+                        (p?.description?.ar || '').toLowerCase().includes(q) ||
+                        (p?.description?.fr || '').toLowerCase().includes(q);
+
+      const matchesSearch = nameMatch || addressMatch || descMatch;
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -464,15 +484,115 @@ const App: React.FC = () => {
 
         {activeTab === 'places' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800">{t.managePlaces}</h3>
-              <button onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }} className="flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg"><Plus size={20} /> {t.newPlace}</button>
+            {/* Header, Search and Add Button */}
+            <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-6 bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl shadow-inner">
+                   <MapPin size={28} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight mb-0.5">
+                    {t.managePlaces}
+                  </h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{places.length} {t.totalPlaces}</p>
+                </div>
+              </div>
+
+              {/* New Prominent Search Field */}
+              <div className="flex-1 max-w-2xl relative group">
+                <Search className={`absolute ${isRtl ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors`} size={20} />
+                <input 
+                  type="text" 
+                  placeholder={isRtl ? 'ابحث بالاسم، العنوان، أو كلمات من الوصف...' : 'Search by name, address, or description...'}
+                  className={`w-full ${isRtl ? 'pr-14 pl-12' : 'pl-14 pr-12'} py-4 bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-[24px] text-sm font-bold text-slate-700 outline-none transition-all`}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className={`absolute ${isRtl ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 p-1 bg-slate-200 text-slate-400 rounded-full hover:bg-orange-100 hover:text-orange-500 transition-all`}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <button 
+                onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }} 
+                className="flex items-center justify-center gap-3 bg-orange-500 text-white px-8 py-4 rounded-[20px] font-black shadow-xl shadow-orange-100 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                <Plus size={20} /> {t.newPlace}
+              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPlaces.map(place => (
-                <PlaceCard key={place.id} place={place} currentLang={currentLang} categories={categories} onEdit={(p) => { setEditingPlace(p); setIsFormOpen(true); }} onDelete={setIdToDelete} />
-              ))}
+
+            {/* Category Filter Bar */}
+            <div className="bg-white p-4 rounded-[24px] shadow-sm border border-slate-100 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-3 min-w-max">
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className={`px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-2 ${
+                    selectedCategory === 'all' 
+                      ? 'bg-slate-900 text-white shadow-lg' 
+                      : 'bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Compass size={16} />
+                  {t.allCategories || 'All Categories'}
+                </button>
+                {categoryKeys.map(key => {
+                  const count = places.filter(p => p.category === key).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedCategory(key)}
+                      className={`px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-2 ${
+                        selectedCategory === key 
+                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-100' 
+                          : 'bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {categories[key]?.[currentLang] || key}
+                      <span className={`text-[10px] px-2 py-0.5 rounded-lg ${selectedCategory === key ? 'bg-white/20' : 'bg-slate-200 text-slate-500'}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Places Grid */}
+            {filteredPlaces.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredPlaces.map(place => (
+                  <PlaceCard 
+                    key={place.id} 
+                    place={place} 
+                    currentLang={currentLang} 
+                    categories={categories} 
+                    onEdit={(p) => { setEditingPlace(p); setIsFormOpen(true); }} 
+                    onDelete={setIdToDelete} 
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white py-24 rounded-[40px] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center px-10">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                  <Search size={32} className="text-slate-200" />
+                </div>
+                <h4 className="text-xl font-black text-slate-800 mb-2">{t.noRecords}</h4>
+                <p className="text-slate-400 max-w-xs font-medium">{t.searchPlaceholder}</p>
+                {(selectedCategory !== 'all' || searchQuery !== '') && (
+                  <button 
+                    onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
+                    className="mt-6 text-orange-500 font-black text-xs uppercase tracking-widest hover:underline"
+                  >
+                    Clear Filters & Search
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

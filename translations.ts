@@ -112,6 +112,15 @@ export const translations = {
     categoryDesc: "إضافة وتعديل فئات الأصول السياحية المتاحة في التطبيق.",
     keyError: "المفتاح موجود بالفعل أو غير صالح.",
 
+    // GIS Map Management
+    gisMapTitle: "إدارة خرائط GIS",
+    mainMapSettings: "إعدادات الخريطة العامة",
+    mainMapDesc: "هذه الخريطة تظهر كخلفية أساسية لجميع التصنيفات.",
+    categoryMap: "خريطة GIS للفئة",
+    uploadMap: "رفع خريطة",
+    mapPreview: "معاينة الخريطة",
+    mapUrlPlaceholder: "رابط صورة الخريطة عالية الدقة...",
+
     // Analytics Strings
     registeredUsers: "المستخدمون المسجلون",
     totalVisitors: "إجمالي الزوار",
@@ -235,6 +244,15 @@ export const translations = {
     categoryDesc: "Add or update tourism asset categories available in the mobile app.",
     keyError: "Key already exists or is invalid.",
 
+    // GIS Map Management
+    gisMapTitle: "GIS Map Management",
+    mainMapSettings: "Global GIS Settings",
+    mainMapDesc: "This high-resolution map serves as the baseline for all city explorations.",
+    categoryMap: "Category GIS Map",
+    uploadMap: "Upload Map",
+    mapPreview: "Map Preview",
+    mapUrlPlaceholder: "High-res PNG URL...",
+
     // New Analytics Strings
     registeredUsers: "Registered Users",
     totalVisitors: "Total Visitors",
@@ -357,6 +375,15 @@ export const translations = {
     categoryName: "Nom de la Catégorie",
     categoryDesc: "Ajouter ou mettre à jour les catégories d'actifs touristiques disponibles.",
     keyError: "La clé existe déjà ou est invalide.",
+
+    // GIS Map Management
+    gisMapTitle: "Gestion des cartes SIG",
+    mainMapSettings: "Paramètres SIG globaux",
+    mainMapDesc: "Cette carte haute résolution sert de base à toutes les explorations.",
+    categoryMap: "Carte SIG de catégorie",
+    uploadMap: "Télécharger la carte",
+    mapPreview: "Aperçu de la carte",
+    mapUrlPlaceholder: "URL PNG haute résolution...",
 
     // New Analytics Strings
     registeredUsers: "Utilisateurs Inscrits",

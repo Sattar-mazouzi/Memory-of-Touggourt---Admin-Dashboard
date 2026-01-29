@@ -14,6 +14,7 @@ import VisitorAnalytics from './components/VisitorAnalytics';
 import ProfileEditor from './components/ProfileEditor';
 import { Place, GalleryItem, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
+import { CATEGORY_ICONS } from './constants';
 import { 
   onAuthStateChanged, 
   auth, 
@@ -31,41 +32,21 @@ import {
   serverTimestamp
 } from './services/firebaseService';
 import { 
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip
-} from 'recharts';
-import { 
   Search, 
   Plus, 
-  TrendingUp, 
   Users, 
   Eye, 
   MapPin, 
-  Settings, 
   Loader2,
   ChevronDown,
-  User,
-  LogOut,
-  Layers,
-  Save,
   Layout,
   Heart,
   Filter,
-  Church,
-  History,
-  Palmtree,
-  Hotel,
-  UtensilsCrossed,
-  AlertTriangle,
-  RefreshCw,
   Star,
   BookOpen,
-  Compass,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Tag
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: CategoryMap = {
@@ -94,7 +75,6 @@ const App: React.FC = () => {
   const [cityReads, setCityReads] = useState<number>(0);
   const [totalGlobalVisitors, setTotalGlobalVisitors] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined);
@@ -313,11 +293,21 @@ const App: React.FC = () => {
       <Sidebar currentLang={currentLang} activeTab={activeTab} setActiveTab={setActiveTab} userRole={user?.role} />
       
       <main className={`flex-1 ${isRtl ? 'mr-64' : 'ml-64'} p-8`}>
+        {/* Persistent Top Bar */}
         <div className="flex justify-between items-center mb-8">
           <div><h2 className="text-2xl font-bold text-slate-800">{t[activeTab as keyof typeof t] || activeTab}</h2><p className="text-slate-400 text-sm">{t.appName} {t.adminPortal}</p></div>
           <div className="flex items-center gap-6">
-            <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">{(['en', 'ar', 'fr'] as const).map(l => (<button key={l} onClick={() => setCurrentLang(l)} className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${currentLang === l ? 'bg-orange-500 text-white shadow-md' : 'text-slate-400'}`}>{l}</button>))}</div>
-            <div className="relative group"><Search className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-2.5 text-slate-400`} size={18} /><input type="text" placeholder={t.searchPlaceholder} className={`${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-white border-transparent focus:border-orange-200 rounded-full text-sm outline-none shadow-sm w-64 transition-all`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+            <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">{(['en', 'ar', 'fr'] as const).map(l => (<button key={l} onClick={() => setCurrentLang(l)} className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${currentLang === l ? 'bg-orange-500 text-white shadow-md' : 'text-slate-600 hover:text-orange-500 transition-colors'}`}>{l}</button>))}</div>
+            <div className="relative group">
+              <Search className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-2.5 text-slate-400`} size={18} />
+              <input 
+                type="text" 
+                placeholder={t.searchPlaceholder} 
+                className={`${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-white border-transparent focus:border-orange-200 rounded-full text-sm outline-none shadow-sm w-64 transition-all`} 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)} 
+              />
+            </div>
             <div className="relative" ref={profileRef}><button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-100"><img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.fullName || 'Admin'}`} className="w-8 h-8 rounded-full" alt="Admin" /><div className="flex flex-col text-start max-w-[120px]"><span className="text-xs font-bold text-slate-700 leading-none truncate">{user?.fullName || 'Admin'}</span><span className="text-[10px] text-orange-500 font-bold uppercase">{user.role === 'admin' ? t.adminRole : t.managerRole}</span></div><ChevronDown size={14} className="text-slate-400" /></button></div>
           </div>
         </div>
@@ -345,14 +335,74 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'places' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-6 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-              <div className="flex items-center gap-4"><div className="p-3 bg-orange-100 text-orange-600 rounded-2xl"><MapPin size={28} /></div><div><h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.managePlaces}</h3><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{places.length} {t.totalPlaces}</p></div></div>
-              <button onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }} className="flex items-center justify-center gap-3 bg-orange-500 text-white px-8 py-4 rounded-[20px] font-black shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all"><Plus size={20} /> {t.newPlace}</button>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl"><MapPin size={28} /></div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.managePlaces}</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{filteredPlaces.length} {t.totalPlaces}</p>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                <div className="relative group min-w-[200px]">
+                  <Search className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300`} size={16} />
+                  <input 
+                    type="text" 
+                    placeholder={t.searchPlaceholder}
+                    className={`w-full ${isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 bg-slate-50 border-none rounded-2xl text-xs font-bold text-slate-700 focus:ring-2 ring-orange-100 outline-none transition-all shadow-inner`}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <button onClick={() => { setEditingPlace(undefined); setIsFormOpen(true); }} className="flex items-center justify-center gap-3 bg-orange-500 text-white px-8 py-4 rounded-[20px] font-black shadow-xl shadow-orange-100 hover:bg-orange-600 hover:scale-[1.02] active:scale-95 transition-all"><Plus size={20} /> {t.newPlace}</button>
+              </div>
             </div>
+
+            {/* Category Filter Bar */}
+            <div className="flex overflow-x-auto pb-2 scrollbar-hide gap-3 no-scrollbar">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border ${
+                  selectedCategory === 'all' 
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg' 
+                    : 'bg-white text-slate-400 border-slate-100 hover:border-orange-200 hover:text-orange-500'
+                }`}
+              >
+                <Filter size={14} />
+                {t.allCategories}
+              </button>
+              {categoryKeys.map(key => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedCategory(key)}
+                  className={`flex items-center gap-2 px-6 py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border ${
+                    selectedCategory === key 
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-lg' 
+                      : 'bg-white text-slate-400 border-slate-100 hover:border-orange-200 hover:text-orange-500'
+                  }`}
+                >
+                  <div className={selectedCategory === key ? 'text-white' : 'text-orange-500'}>
+                    {React.cloneElement(CATEGORY_ICONS[key] as React.ReactElement, { size: 14, className: 'w-3.5 h-3.5' })}
+                  </div>
+                  {categories[key][currentLang] || key}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredPlaces.map(p => <PlaceCard key={p.id} place={p} currentLang={currentLang} categories={categories} onEdit={p => { setEditingPlace(p); setIsFormOpen(true); }} onDelete={id => { setIdToDelete(id); setDeleteType('place'); }} />)}
             </div>
+
+            {filteredPlaces.length === 0 && (
+              <div className="py-24 text-center bg-white rounded-[40px] border border-slate-100 shadow-sm animate-in fade-in zoom-in-95">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <MapPin size={32} className="text-slate-200" />
+                </div>
+                <h4 className="text-slate-800 font-black uppercase text-sm tracking-widest mb-1">{t.noRecords}</h4>
+                <p className="text-slate-400 text-xs font-bold">{isRtl ? 'حاول استخدام كلمات بحث أخرى أو تغيير التصنيف.' : 'Try different search terms or change the category.'}</p>
+              </div>
+            )}
           </div>
         )}
 

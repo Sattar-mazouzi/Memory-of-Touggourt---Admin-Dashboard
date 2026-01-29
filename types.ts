@@ -11,41 +11,19 @@ export enum CategoryType {
   RESTAURANTS = 'restaurants'
 }
 
-/**
- * Normalizes category strings from various sources (DB, old records, different languages)
- * to a standardized internal key defined in CategoryType.
- */
 export const normalizeCategoryKey = (raw: string): string => {
   if (!raw) return 'culture';
   const clean = raw.trim().toLowerCase();
-  
-  // Mapping of common variations to standard keys
   const mapping: Record<string, string> = {
-    // English variations
     'religion': 'religion', 'religious': 'religion',
     'history': 'history', 'historical': 'history',
     'culture': 'culture', 'cultural': 'culture',
     'nature': 'nature', 'natural': 'nature',
     'hotels': 'hotels', 'hotel': 'hotels',
     'restaurants': 'restaurants', 'restaurant': 'restaurants',
-    
-    // Arabic variations
-    'ديني': 'religion',
-    'تاريخي': 'history',
-    'ثقافي': 'culture',
-    'طبيعي': 'nature',
-    'فنادق': 'hotels',
-    'مطاعم': 'restaurants',
-    
-    // French variations
-    'religieux': 'religion',
-    'historique': 'history',
-    'culturel': 'culture',
-    'naturel': 'nature',
-    'hôtels': 'hotels',
-    'restauration': 'restaurants'
+    'ديني': 'religion', 'تاريخي': 'history', 'ثقافي': 'culture', 'طبيعي': 'nature', 'فنادق': 'hotels', 'مطاعم': 'restaurants',
+    'religieux': 'religion', 'historique': 'history', 'culturel': 'culture', 'naturel': 'nature', 'hôtels': 'hotels', 'restauration': 'restaurants'
   };
-
   return mapping[clean] || clean;
 };
 
@@ -92,6 +70,24 @@ export interface Place {
   ratingCount?: number;
 }
 
+export interface GalleryItem {
+  id: string;
+  title: LocalizedText;
+  images: {
+    img1: string;
+    img2: string;
+    img3: string;
+    img4: string;
+    img5: string;
+  };
+  videos: {
+    video1: string;
+    video2: string;
+    video3: string;
+  };
+  createdAt?: any;
+}
+
 export interface HeritageData {
   industries: LocalizedText;
   clothing: LocalizedText;
@@ -113,9 +109,9 @@ export interface CityArticle {
   id: string;
   name: LocalizedText;
   population: number;
-  readingCount?: number; // Added field for analytics
+  readingCount?: number;
   cover: string;
-  location: string; // map image url
+  location: string;
   bio: LocalizedText;
   extendedBio: LocalizedText;
   geography: LocalizedText;
@@ -131,8 +127,8 @@ export interface CityArticle {
 export interface CityStaff {
   uid: string;
   email: string;
-  fullName: string; // Changed from full_name
-  age?: number;     // Added age
+  fullName: string;
+  age?: number;
   role: UserRole;
   lastLogin?: any;
 }

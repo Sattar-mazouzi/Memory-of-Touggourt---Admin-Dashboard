@@ -71,6 +71,12 @@ export interface PlaceImages {
   img5: string;
 }
 
+export interface PlaceVideoUrls {
+  video1: string;
+  video2: string;
+  video3: string;
+}
+
 export interface Place {
   id: string;
   name: LocalizedText;
@@ -78,6 +84,7 @@ export interface Place {
   category: string; 
   description: LocalizedText;
   imageUrl: PlaceImages; 
+  videoUrls?: PlaceVideoUrls;
   location: Coordinates; 
   featured: boolean;
   rating: number; 

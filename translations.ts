@@ -132,7 +132,12 @@ export const translations = {
     topRated: "الأعلى تقييماً",
     reviews: "مراجعة",
     allCategories: "كل الفئات",
-    cityReads: "قراءات دليل المدينة"
+    cityReads: "قراءات دليل المدينة",
+
+    // YouTube Features
+    youtubeVideo: "رابط فيديو يوتيوب",
+    videoPreview: "معاينة الفيديو",
+    videoSlot: "فيديو رقم"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -264,7 +269,12 @@ export const translations = {
     topRated: "Top Rated Places",
     reviews: "Reviews",
     allCategories: "All Categories",
-    cityReads: "City Guide Reads"
+    cityReads: "City Guide Reads",
+
+    // YouTube Features
+    youtubeVideo: "YouTube Video URL",
+    videoPreview: "Video Preview",
+    videoSlot: "Video Slot"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -396,6 +406,11 @@ export const translations = {
     topRated: "Les Mieux Notés",
     reviews: "Avis",
     allCategories: "Toutes les catégories",
-    cityReads: "Lectures du Guide"
+    cityReads: "Lectures du Guide",
+
+    // YouTube Features
+    youtubeVideo: "URL Vidéo YouTube",
+    videoPreview: "Aperçu Vidéo",
+    videoSlot: "Emplacement Vidéo"
   }
 };

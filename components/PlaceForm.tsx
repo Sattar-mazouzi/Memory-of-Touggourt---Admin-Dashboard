@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
-import { Place, LocalizedText, AppLanguage, PlaceImages, normalizeCategoryKey, CategoryMap } from '../types';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube } from 'lucide-react';
+import { Place, LocalizedText, AppLanguage, PlaceImages, PlaceVideoUrls, normalizeCategoryKey, CategoryMap } from '../types';
 import { translations } from '../translations';
 import { uploadImage } from '../services/cloudinaryService';
 
@@ -35,10 +35,15 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
         img4: '',
         img5: ''
       },
+      videoUrls: {
+        video1: '',
+        video2: '',
+        video3: ''
+      },
       featured: false,
       rating: 4.5,
       ratingCount: 0,
-      favoritesCount: 0, // Added explicit initialization
+      favoritesCount: 0,
       location: { latitude: 33.1092, longitude: 6.0332 }
     };
 
@@ -50,6 +55,10 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
       imageUrl: {
         ...defaults.imageUrl,
         ...(typeof place.imageUrl === 'object' ? place.imageUrl : { cover: place.imageUrl as unknown as string })
+      },
+      videoUrls: {
+        ...defaults.videoUrls,
+        ...place.videoUrls
       },
       location: {
         latitude: place.location?.latitude ?? defaults.location.latitude,
@@ -107,6 +116,22 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
     }));
   };
 
+  const updateVideoUrl = (field: keyof PlaceVideoUrls, url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      videoUrls: {
+        ...(prev.videoUrls as PlaceVideoUrls),
+        [field]: url
+      }
+    }));
+  };
+
+  const getYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -119,6 +144,12 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
     { key: 'img3', label: `${t.image} 3` },
     { key: 'img4', label: `${t.image} 4` },
     { key: 'img5', label: `${t.image} 5` },
+  ];
+
+  const videoSlots: { key: keyof PlaceVideoUrls; label: string }[] = [
+    { key: 'video1', label: `${t.videoSlot} 1` },
+    { key: 'video2', label: `${t.videoSlot} 2` },
+    { key: 'video3', label: `${t.videoSlot} 3` },
   ];
 
   return (
@@ -266,6 +297,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
             />
           </div>
 
+          {/* Image Gallery Section */}
           <div className="space-y-6 pt-4 border-t border-slate-50">
             <div className="flex items-center justify-between">
               <label className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -318,6 +350,59 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* YouTube Video Section */}
+          <div className="space-y-6 pt-4 border-t border-slate-50">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                <Youtube className="text-red-500" size={20} />
+                {t.youtubeVideo}
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {videoSlots.map((slot) => {
+                const videoId = getYoutubeId(formData.videoUrls?.[slot.key] || '');
+                return (
+                  <div key={slot.key} className="space-y-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{slot.label}</p>
+                    
+                    {/* Video Preview Container */}
+                    <div className="aspect-video rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm relative group">
+                      {videoId ? (
+                        <iframe
+                          className="w-full h-full"
+                          src={`https://www.youtube.com/embed/${videoId}`}
+                          title={slot.label}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 p-6 text-center">
+                          <Youtube size={32} className="mb-2 opacity-20" />
+                          <p className="text-[8px] font-black uppercase tracking-widest opacity-40">{t.videoPreview}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="relative group/input">
+                      <div className={`absolute ${isFormRtl ? 'right-3' : 'left-3'} top-2.5 text-slate-300`}>
+                        <LinkIcon size={14} />
+                      </div>
+                      <input 
+                        type="url"
+                        className={`w-full ${isFormRtl ? 'pr-9 pl-2' : 'pl-9 pr-2'} py-2 bg-slate-50 border border-transparent focus:border-orange-100 rounded-xl outline-none text-[10px] text-slate-500 font-medium`}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={formData.videoUrls?.[slot.key] || ''}
+                        onChange={e => updateVideoUrl(slot.key, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

@@ -154,8 +154,8 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ currentLang }) => {
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredItems.map((item) => {
-            const displayTitle = item.title?.[currentLang] || item.title?.en || 'No Title';
-            const displayDesc = item.description?.[currentLang] || item.description?.en || '...';
+            const displayTitle = item.title?.[currentLang] || item.title?.en || item.title?.fr || 'No Title';
+            const displayDesc = item.description?.[currentLang] || item.description?.en || item.description?.fr || '';
             const coverImg = item.images?.img1 || 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800';
             
             // Count media types
@@ -202,9 +202,14 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ currentLang }) => {
 
                 <div className="p-8 flex-1 flex flex-col">
                   <h4 className="text-xl font-black text-slate-800 mb-3 line-clamp-1">{displayTitle}</h4>
-                  <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
-                    {displayDesc}
-                  </p>
+                  
+                  {displayDesc ? (
+                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
+                      {displayDesc}
+                    </p>
+                  ) : (
+                    <div className="flex-1 mb-6"></div>
+                  )}
                   
                   <div className="flex items-center justify-between pt-6 border-t border-slate-50">
                     <div className="flex -space-x-3 overflow-hidden">
@@ -224,7 +229,7 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ currentLang }) => {
                       onClick={() => { setEditingItem(item); setIsFormOpen(true); }}
                       className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2 hover:underline"
                     >
-                      View Details <ExternalLink size={12} />
+                      {isRtl ? 'عرض التفاصيل' : 'View Details'} <ExternalLink size={12} />
                     </button>
                   </div>
                 </div>

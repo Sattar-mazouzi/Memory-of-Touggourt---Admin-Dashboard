@@ -142,10 +142,10 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ item, currentLang, onSave, on
           <div className="space-y-4">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.galleryDesc} ({editingLang.toUpperCase()})</label>
             <textarea
-              required
               rows={4}
               dir={isFormRtl ? 'rtl' : 'ltr'}
               className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none resize-none"
+              placeholder={isFormRtl ? 'اختياري...' : 'Optional...'}
               value={formData.description?.[editingLang] || ''}
               onChange={e => updateLocalized('description', e.target.value)}
             />

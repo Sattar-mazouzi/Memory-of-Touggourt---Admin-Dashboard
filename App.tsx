@@ -372,22 +372,28 @@ const App: React.FC = () => {
                 <Filter size={14} />
                 {t.allCategories}
               </button>
-              {categoryKeys.map(key => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedCategory(key)}
-                  className={`flex items-center gap-2 px-6 py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border ${
-                    selectedCategory === key 
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-lg' 
-                      : 'bg-white text-slate-400 border-slate-100 hover:border-orange-200 hover:text-orange-500'
-                  }`}
-                >
-                  <div className={selectedCategory === key ? 'text-white' : 'text-orange-500'}>
-                    {React.cloneElement(CATEGORY_ICONS[key] as React.ReactElement, { size: 14, className: 'w-3.5 h-3.5' })}
-                  </div>
-                  {categories[key][currentLang] || key}
-                </button>
-              ))}
+              {categoryKeys.map(key => {
+                const icon = CATEGORY_ICONS[key] || <Tag size={14} className="w-3.5 h-3.5" />;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedCategory(key)}
+                    className={`flex items-center gap-2 px-6 py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all border ${
+                      selectedCategory === key 
+                        ? 'bg-orange-500 text-white border-orange-500 shadow-lg' 
+                        : 'bg-white text-slate-400 border-slate-100 hover:border-orange-200 hover:text-orange-500'
+                    }`}
+                  >
+                    <div className={selectedCategory === key ? 'text-white' : 'text-orange-500'}>
+                      {React.isValidElement(icon) 
+                        ? React.cloneElement(icon as React.ReactElement, { size: 14, className: 'w-3.5 h-3.5' })
+                        : <Tag size={14} className="w-3.5 h-3.5" />
+                      }
+                    </div>
+                    {categories[key][currentLang] || key}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

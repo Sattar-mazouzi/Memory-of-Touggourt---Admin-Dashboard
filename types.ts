@@ -109,6 +109,25 @@ export interface GalleryData {
   oasis: string;
 }
 
+export interface GalleryItem {
+  id: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  images: {
+    img1: string;
+    img2: string;
+    img3: string;
+    img4: string;
+    img5: string;
+  };
+  videos: {
+    video1: string;
+    video2: string;
+    video3: string;
+  };
+  createdAt?: any;
+}
+
 export interface CityArticle {
   id: string;
   name: LocalizedText;

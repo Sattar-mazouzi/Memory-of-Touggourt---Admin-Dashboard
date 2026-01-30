@@ -9,6 +9,7 @@ export const translations = {
     places: "الأماكن",
     aboutCity: "حول المدينة",
     categories: "التصنيفات",
+    gallery: "المعرض",
     settings: "الإعدادات والملف الشخصي",
     signOut: "تسجيل الخروج",
     welcomeBack: "مرحباً بعودتك",
@@ -137,7 +138,16 @@ export const translations = {
     // YouTube Features
     youtubeVideo: "رابط فيديو يوتيوب",
     videoPreview: "معاينة الفيديو",
-    videoSlot: "فيديو رقم"
+    videoSlot: "فيديو رقم",
+
+    // Gallery strings
+    manageGallery: "إدارة المعرض",
+    newGalleryItem: "إضافة عنصر جديد للمعرض",
+    galleryTitle: "عنوان العنصر",
+    galleryDesc: "وصف العنصر",
+    galleryImages: "صور المعرض",
+    galleryVideos: "فيديوهات المعرض",
+    totalGalleryItems: "إجمالي عناصر المعرض"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -146,6 +156,7 @@ export const translations = {
     places: "Places",
     aboutCity: "About City",
     categories: "Categories",
+    gallery: "Gallery",
     settings: "Settings & Profile",
     signOut: "Sign Out",
     welcomeBack: "Welcome Back",
@@ -274,7 +285,16 @@ export const translations = {
     // YouTube Features
     youtubeVideo: "YouTube Video URL",
     videoPreview: "Video Preview",
-    videoSlot: "Video Slot"
+    videoSlot: "Video Slot",
+
+    // Gallery strings
+    manageGallery: "Manage Gallery",
+    newGalleryItem: "New Gallery Item",
+    galleryTitle: "Item Title",
+    galleryDesc: "Item Description",
+    galleryImages: "Gallery Images",
+    galleryVideos: "Gallery Videos",
+    totalGalleryItems: "Total Gallery Items"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -283,6 +303,7 @@ export const translations = {
     places: "Lieux",
     aboutCity: "La Ville",
     categories: "Catégories",
+    gallery: "Galerie",
     settings: "Paramètres & Profil",
     signOut: "Déconnexion",
     welcomeBack: "Bon Retour",
@@ -411,6 +432,15 @@ export const translations = {
     // YouTube Features
     youtubeVideo: "URL Vidéo YouTube",
     videoPreview: "Aperçu Vidéo",
-    videoSlot: "Emplacement Vidéo"
+    videoSlot: "Emplacement Vidéo",
+
+    // Gallery strings
+    manageGallery: "Gérer la Galerie",
+    newGalleryItem: "Nouvel Élément de Galerie",
+    galleryTitle: "Titre de l'Élément",
+    galleryDesc: "Description de l'Élément",
+    galleryImages: "Images de la Galerie",
+    galleryVideos: "Vidéos de la Galerie",
+    totalGalleryItems: "Total des Éléments de Galerie"
   }
 };

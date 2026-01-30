@@ -7,6 +7,7 @@ import StaffManager from './components/StaffManager';
 import CityInfoEditor from './components/CityInfoEditor';
 import LoginPage from './components/LoginPage';
 import CategoryManager from './components/CategoryManager';
+import GalleryManager from './components/GalleryManager';
 import ConfirmModal from './components/ConfirmModal';
 import VisitorAnalytics from './components/VisitorAnalytics';
 import ProfileEditor from './components/ProfileEditor';
@@ -60,7 +61,8 @@ import {
   Star,
   BookOpen,
   Compass,
-  X
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: CategoryMap = {
@@ -596,6 +598,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'gallery' && <GalleryManager currentLang={currentLang} />}
         {activeTab === 'categories' && <CategoryManager currentLang={currentLang} categories={categories} />}
         {activeTab === 'aboutCity' && <CityInfoEditor currentLang={currentLang} />}
         {activeTab === 'staff' && user?.role === 'admin' && <StaffManager currentLang={currentLang} />}

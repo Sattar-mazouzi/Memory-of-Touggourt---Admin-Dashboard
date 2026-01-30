@@ -48,44 +48,33 @@ import {
  *       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalSessions']);
  *     }
  *     match /dailyStats/{date} {
+ *       // IMPORTANT: Changed 'isAdmin()' to 'isStaff()' so managers can see the graph too!
  *       allow read: if isStaff();
- *       allow create, update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count', 'date', 'lastUpdate']);
+ *       // Allow public creation and increment of count
+ *       allow create, update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count']);
  *     }
  *
- *     // CONTENT COLLECTIONS
+ *     // REST OF YOUR RULES... (Keep the ones you already have)
  *     match /places/{placeId} {
  *       allow read: if true;
  *       allow write: if isStaff();
- *       // Allow users to update favorites/ratings without full staff write access
  *       allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingCount', 'favoritesCount']);
  *     }
- *     
- *     match /gallery/{itemId} {
- *       allow read: if true;
- *       allow write: if isStaff();
- *     }
- *
  *     match /aboutCity/{docId} {
  *       allow read: if true;
  *       allow write: if isStaff();
- *       // Allow public to increment reading count
  *       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readingCount']);
  *     }
- *
- *     // CONFIGURATION
  *     match /appConfig/{configId} {
  *       allow read: if true;
  *       allow write: if isAdmin();
  *     }
- *
- *     // USER MANAGEMENT
  *     match /users/{userId} {
- *       allow get: if isSignedIn() && (request.auth.uid == userId || isStaff());
- *       allow list: if isStaff(); // Changed to isStaff() so managers can see team members
+ *       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+ *       allow list: if isAdmin();
  *       allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.role == 'visitor';
  *       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role);
  *     }
- *
  *     match /reviews/{reviewId} {
  *       allow read: if true;
  *       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;

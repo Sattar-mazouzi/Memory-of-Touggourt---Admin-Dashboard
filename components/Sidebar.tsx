@@ -7,8 +7,7 @@ import {
   Settings, 
   LogOut,
   Users,
-  Info,
-  Image as ImageIcon
+  Info
 } from 'lucide-react';
 import { signOut, auth } from '../services/firebaseService';
 import { AppLanguage, UserRole } from '../types';
@@ -28,7 +27,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab,
   const navItems = [
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard size={20} /> },
     { id: 'places', label: t.places, icon: <MapPin size={20} /> },
-    { id: 'gallery', label: t.gallery, icon: <ImageIcon size={20} /> },
     { id: 'aboutCity', label: t.aboutCity, icon: <Info size={20} /> },
     { id: 'categories', label: t.categories, icon: <Layers size={20} /> },
     { id: 'staff', label: t.staff, icon: <Users size={20} />, adminOnly: true },

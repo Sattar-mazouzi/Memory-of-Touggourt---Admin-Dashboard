@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { AppLanguage, CategoryMap, LocalizedText, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
-import { db, doc, setDoc, onSnapshot, updateDoc } from '../services/firebaseService';
+import { db, doc, setDoc, onSnapshot, updateDoc, writeBatch } from '../services/firebaseService';
 import { uploadImage } from '../services/cloudinaryService';
 import ConfirmModal from './ConfirmModal';
 
@@ -100,10 +100,20 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
 
     setDeletingKey(keyToConfirmDelete);
     try {
+      const batch = writeBatch(db);
+      
+      // 1. Prepare updated categories document (remove the key)
       const updatedCategories = { ...categories };
       delete updatedCategories[keyToConfirmDelete];
+      batch.set(doc(db, "appConfig", "categories"), updatedCategories);
 
-      await setDoc(doc(db, "appConfig", "categories"), updatedCategories);
+      // 2. Prepare updated GIS maps document (remove the key)
+      const updatedGisMaps = { ...gisMaps };
+      delete updatedGisMaps[keyToConfirmDelete];
+      batch.set(doc(db, "appConfig", "gisMaps"), updatedGisMaps);
+
+      // 3. Commit the batch atomically
+      await batch.commit();
       setKeyToConfirmDelete(null);
     } catch (err: any) {
       console.error("Failed to delete category:", err);

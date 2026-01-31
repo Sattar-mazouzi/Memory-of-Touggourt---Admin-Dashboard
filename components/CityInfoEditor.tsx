@@ -5,11 +5,11 @@ import {
   History, Info, BookOpen, Globe, MapPin, CloudSun, Palette,
   Shirt, UtensilsCrossed, Music4, CalendarDays, Dices, Layers,
   Layout, Type, Users, ThermometerSun, Edit2, X, Link as LinkIcon,
-  Languages, Upload
+  Languages, Upload, Grid
 } from 'lucide-react';
-import { AppLanguage, CityArticle, LocalizedText, HeritageData } from '../types';
+import { AppLanguage, CityArticle, LocalizedText, HeritageData, GalleryItem } from '../types';
 import { translations } from '../translations';
-import { db, doc, getDoc, setDoc, collection, getDocs } from '../services/firebaseService';
+import { db, doc, getDoc, setDoc, collection, getDocs, query, where } from '../services/firebaseService';
 import { uploadImage } from '../services/cloudinaryService';
 
 interface CityInfoEditorProps {
@@ -35,6 +35,10 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Gallery Data for lookup and selection
+  const [allGalleryItems, setAllGalleryItems] = useState<GalleryItem[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+
   // Modal State
   const [imageModal, setImageModal] = useState<ImageEditState>({
     isOpen: false,
@@ -42,23 +46,30 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     url: ''
   });
 
-  // Since we only have one document, we'll fetch the whole collection and take the first item
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchArticleAndGallery = async () => {
       setLoading(true);
       try {
+        // 1. Fetch City Article
         const colRef = collection(db, 'aboutCity');
         const querySnapshot = await getDocs(colRef);
         
+        let cityData: CityArticle;
+
         if (!querySnapshot.empty) {
           const firstDoc = querySnapshot.docs[0];
-          setArticle({ id: firstDoc.id, ...firstDoc.data() } as CityArticle);
+          cityData = { id: firstDoc.id, ...firstDoc.data() } as CityArticle;
+          
+          // Migration/Safety check for new gallery structure
+          if (!cityData.gallery || !cityData.gallery.hasOwnProperty('item1')) {
+            cityData.gallery = {
+              item1: '', item2: '', item3: '', item4: '', item5: ''
+            };
+          }
         } else {
-          // Initialize a default article if none exists
           const emptyLoc: LocalizedText = { ar: '', en: '', fr: '' };
-          const articleId = 'touggourt_main'; // Fallback ID if creating new
-          const initialArticle: CityArticle = {
-            id: articleId,
+          cityData = {
+            id: 'touggourt_main',
             name: { ar: 'توقرت', en: 'Touggourt', fr: 'Touggourt' },
             population: 611345,
             readingCount: 0,
@@ -80,22 +91,24 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
               games: emptyLoc
             },
             gallery: {
-              architecture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/architecture.jpg',
-              camel: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/camel.png',
-              culture: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/culture.jpg',
-              dunes: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/dunes.jpg',
-              oasis: 'https://raw.githubusercontent.com/Sattar-mazouzi/Touggourtmemoryimages/refs/heads/main/oasis.jpg'
+              item1: '', item2: '', item3: '', item4: '', item5: ''
             }
           };
-          setArticle(initialArticle);
         }
+        setArticle(cityData);
+
+        // 2. Fetch all gallery items for selection
+        const gallerySnap = await getDocs(collection(db, 'gallery'));
+        const galleryList = gallerySnap.docs.map(d => ({ id: d.id, ...d.data() } as GalleryItem));
+        setAllGalleryItems(galleryList);
+
       } catch (err) {
-        console.error('Error fetching city article:', err);
+        console.error('Error fetching city data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchArticle();
+    fetchArticleAndGallery();
   }, []);
 
   const handleSave = async () => {
@@ -136,19 +149,14 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
     if (!file) return;
 
     setIsUploading(true);
-    const { field, subField } = imageModal;
+    const { field } = imageModal;
     try {
       const url = await uploadImage(file);
       setImageModal(prev => ({ ...prev, url }));
-      setArticle(prev => {
-        if (!prev) return null;
-        if (field === 'gallery' && subField) {
-          return { ...prev, gallery: { ...prev.gallery, [subField]: url } };
-        } else {
-          // @ts-ignore
-          return { ...prev, [field]: url };
-        }
-      });
+      
+      if (field === 'cover' || field === 'location') {
+        setArticle(prev => prev ? ({ ...prev, [field]: url }) : null);
+      }
     } catch (err: any) {
       alert(`Upload Failed: ${err.message}`);
     } finally {
@@ -159,26 +167,45 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
 
   const handleUpdateImageUrl = () => {
     if (!article) return;
-    const { field, subField, url } = imageModal;
+    const { field, url } = imageModal;
+    if (field === 'cover' || field === 'location') {
+      setArticle(prev => prev ? ({ ...prev, [field]: url }) : null);
+    }
+    setImageModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handlePickGalleryItem = (galleryItem: GalleryItem) => {
+    if (!article) return;
+    const { field, subField } = imageModal;
+    
     setArticle(prev => {
       if (!prev) return null;
+      
       if (field === 'gallery' && subField) {
+        // Save ID for gallery item slots
         return {
           ...prev,
           gallery: {
             ...prev.gallery,
-            [subField]: url
+            [subField]: galleryItem.id
           }
         };
       } else if (field === 'cover' || field === 'location') {
+        // Save URL for cover/location slots
         return {
           ...prev,
-          [field]: url
+          [field]: galleryItem.images.img1
         };
       }
       return prev;
     });
     setImageModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const getGalleryItemUrl = (id: string) => {
+    if (!id) return '';
+    const item = allGalleryItems.find(i => i.id === id);
+    return item?.images.img1 || '';
   };
 
   const SectionHeader = ({ icon, title, light = false }: { icon: any, title: string, light?: boolean }) => (
@@ -289,6 +316,7 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
+          {/* Main Content Fields */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
@@ -447,95 +475,145 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                </label>
                <div className="space-y-6">
                  {[
-                   { id: 'architecture', label: "Architecture" },
-                   { id: 'camel', label: "Camel" },
-                   { id: 'culture', label: "Culture" },
-                   { id: 'dunes', label: "Dunes" },
-                   { id: 'oasis', label: "Oasis" }
-                 ].map(img => (
-                   <div key={img.id} className="space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{img.label}</p>
-                     <ImagePreview 
-                        src={article.gallery[img.id as keyof typeof article.gallery]} 
-                        label={img.label} 
-                        aspect="h-24"
-                        onClick={() => setImageModal({ 
-                          isOpen: true, 
-                          field: 'gallery', 
-                          subField: img.id, 
-                          url: article.gallery[img.id as keyof typeof article.gallery] 
-                        })} 
-                     />
-                   </div>
-                 ))}
+                   { id: 'item1', label: "Item 1" },
+                   { id: 'item2', label: "Item 2" },
+                   { id: 'item3', label: "Item 3" },
+                   { id: 'item4', label: "Item 4" },
+                   { id: 'item5', label: "Item 5" }
+                 ].map(slot => {
+                   const itemId = article.gallery[slot.id as keyof typeof article.gallery];
+                   return (
+                     <div key={slot.id} className="space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{slot.label}</p>
+                       <ImagePreview 
+                          src={getGalleryItemUrl(itemId)} 
+                          label={slot.label} 
+                          aspect="h-24"
+                          onClick={() => setImageModal({ 
+                            isOpen: true, 
+                            field: 'gallery', 
+                            subField: slot.id, 
+                            url: getGalleryItemUrl(itemId) 
+                          })} 
+                       />
+                     </div>
+                   );
+                 })}
                </div>
              </div>
            </div>
         </div>
       </div>
 
-      {/* Image URL & Upload Modal */}
+      {/* Media Selection Modal */}
       {imageModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-           <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+           <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white">
                  <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-orange-100 text-orange-600 rounded-xl">
                        <ImageIcon size={22} />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800">{t.updateEntry}</h3>
+                    <h3 className="text-xl font-black text-slate-800">
+                      {isRtl ? 'اختر من المعرض' : 'Select from Gallery'}
+                    </h3>
                  </div>
                  <button onClick={() => setImageModal(prev => ({ ...prev, isOpen: false }))} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                     <X size={24} className="text-slate-400" />
                  </button>
               </div>
 
-              <div className="p-8 space-y-6">
-                 <div className="aspect-video rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner group relative">
-                    {imageModal.url ? (
-                      <img src={imageModal.url} className="w-full h-full object-cover" alt="Preview" onError={(e) => (e.currentTarget.src = 'https://images.unsplash.com/photo-1548013146-72479768bada?w=600')} />
+              <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide">
+                 {/* Direct URL/Upload for Cover & Location */}
+                 {imageModal.field !== 'gallery' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 border-b border-slate-50 pb-10">
+                       <div className="space-y-4">
+                          <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{isRtl ? 'رفع أو معاينة' : 'Upload & Preview'}</label>
+                          <div className="aspect-video rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner group relative">
+                             {imageModal.url ? (
+                               <img src={imageModal.url} className="w-full h-full object-cover" alt="Preview" onError={(e) => (e.currentTarget.src = 'https://images.unsplash.com/photo-1548013146-72479768bada?w=600')} />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                 <ImageIcon size={64} />
+                               </div>
+                             )}
+                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                 <button 
+                                   onClick={() => fileInputRef.current?.click()}
+                                   disabled={isUploading}
+                                   className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-xl hover:scale-105 transition-transform disabled:opacity-50"
+                                 >
+                                   {isUploading ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />} 
+                                   {isUploading ? t.uploading : t.uploadImage}
+                                 </button>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="space-y-6">
+                          <div className="relative pt-4">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest absolute top-0 left-4 bg-white px-2">
+                                {t.assetUrl}
+                             </label>
+                             <div className="flex items-center gap-2 bg-slate-50 border-none focus-within:ring-2 ring-orange-100 rounded-2xl p-4 transition-all shadow-sm">
+                                <LinkIcon size={18} className="text-slate-300" />
+                                <input 
+                                   type="url"
+                                   className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-600 transition-all"
+                                   placeholder="Paste direct URL..."
+                                   value={imageModal.url}
+                                   onChange={e => setImageModal(prev => ({ ...prev, url: e.target.value }))}
+                                />
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 )}
+
+                 {/* Gallery Picker */}
+                 <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                       <label className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                          <Grid className="text-orange-500" size={20} />
+                          {isRtl ? 'اختر من المعرض' : 'Select from Gallery'}
+                       </label>
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">
+                          {allGalleryItems.length} {isRtl ? 'عناصر' : 'Items'}
+                       </span>
+                    </div>
+
+                    {allGalleryItems.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {allGalleryItems.map(item => {
+                          const isSelected = (imageModal.field === 'gallery' && imageModal.subField && article?.gallery[imageModal.subField as keyof typeof article.gallery] === item.id) || 
+                                           (imageModal.field !== 'gallery' && imageModal.url === item.images.img1);
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => handlePickGalleryItem(item)}
+                              className={`relative aspect-square rounded-2xl overflow-hidden border-4 transition-all group ${
+                                isSelected ? 'border-orange-500 ring-4 ring-orange-100' : 'border-transparent hover:border-slate-200'
+                              }`}
+                            >
+                              <img src={item.images.img1} className="w-full h-full object-cover" alt="" />
+                              <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <p className="text-[8px] font-bold text-white truncate">{item.title[currentLang] || item.title.en}</p>
+                              </div>
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-xl">
+                                  <CheckCircle2 size={14} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ImageIcon size={64} />
+                      <div className="py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                         <Layout size={32} className="opacity-20 mb-2" />
+                         <p className="text-xs font-bold">{isRtl ? 'لا يوجد عناصر في المعرض' : 'No gallery items found'}</p>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-xl hover:scale-105 transition-transform disabled:opacity-50"
-                        >
-                          {isUploading ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />} 
-                          {isUploading ? t.uploading : t.uploadImage}
-                        </button>
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 gap-4">
-                    <button 
-                       onClick={() => fileInputRef.current?.click()}
-                       disabled={isUploading}
-                       className="w-full py-4 bg-orange-100 text-orange-600 font-black rounded-2xl hover:bg-orange-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                       {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
-                       {isUploading ? t.uploading : t.uploadImage}
-                    </button>
-
-                    <div className="relative">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-white px-2">
-                           {t.assetUrl}
-                        </label>
-                        <div className="flex items-center gap-2 bg-slate-50 border-none focus-within:ring-2 ring-orange-100 rounded-2xl p-4 transition-all shadow-sm">
-                           <LinkIcon size={18} className="text-slate-300" />
-                           <input 
-                              type="url"
-                              className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-600 transition-all"
-                              placeholder="Or paste direct URL..."
-                              value={imageModal.url}
-                              onChange={e => setImageModal(prev => ({ ...prev, url: e.target.value }))}
-                           />
-                        </div>
-                    </div>
                  </div>
               </div>
 
@@ -546,12 +624,14 @@ const CityInfoEditor: React.FC<CityInfoEditorProps> = ({ currentLang }) => {
                  >
                    {t.cancel}
                  </button>
-                 <button 
-                   onClick={handleUpdateImageUrl}
-                   className="flex-[2] py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 hover:scale-[1.02] active:scale-95 transition-all"
-                 >
-                   {t.save}
-                 </button>
+                 {imageModal.field !== 'gallery' && (
+                   <button 
+                     onClick={handleUpdateImageUrl}
+                     className="flex-[2] py-4 bg-orange-500 text-white font-black rounded-2xl shadow-xl shadow-orange-100 hover:bg-orange-600 hover:scale-[1.02] active:scale-95 transition-all"
+                   >
+                     {t.save}
+                   </button>
+                 )}
               </div>
            </div>
         </div>

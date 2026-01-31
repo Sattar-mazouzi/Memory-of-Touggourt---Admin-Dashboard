@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Image as ImageIcon, 
@@ -98,8 +97,9 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ currentLang }) => {
   const filteredItems = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return items.filter(item => {
-      const titleMatch = Object.values(item.title || {}).some(v => v.toLowerCase().includes(q));
-      const descMatch = Object.values(item.description || {}).some(v => v.toLowerCase().includes(q));
+      // Safely handle localized fields for search filtering by ensuring values are strings
+      const titleMatch = Object.values(item.title || {}).some(v => typeof v === 'string' && (v as string).toLowerCase().includes(q));
+      const descMatch = Object.values(item.description || {}).some(v => typeof v === 'string' && (v as string).toLowerCase().includes(q));
       return titleMatch || descMatch;
     });
   }, [items, searchQuery]);

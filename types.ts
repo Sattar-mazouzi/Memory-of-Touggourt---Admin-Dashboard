@@ -102,17 +102,18 @@ export interface HeritageData {
 }
 
 export interface GalleryData {
-  architecture: string;
-  camel: string;
-  culture: string;
-  dunes: string;
-  oasis: string;
+  item1: string; // Stores GalleryItem document ID
+  item2: string;
+  item3: string;
+  item4: string;
+  item5: string;
 }
 
 export interface GalleryItem {
   id: string;
   title: LocalizedText;
   description: LocalizedText;
+  showInCityInfo?: boolean; // New field to mark items as candidates for City Info
   images: {
     img1: string;
     img2: string;
@@ -132,9 +133,9 @@ export interface CityArticle {
   id: string;
   name: LocalizedText;
   population: number;
-  readingCount?: number; // Added field for analytics
+  readingCount?: number; 
   cover: string;
-  location: string; // map image url
+  location: string; 
   bio: LocalizedText;
   extendedBio: LocalizedText;
   geography: LocalizedText;
@@ -150,8 +151,8 @@ export interface CityArticle {
 export interface CityStaff {
   uid: string;
   email: string;
-  fullName: string; // Changed from full_name
-  age?: number;     // Added age
+  fullName: string; 
+  age?: number;     
   role: UserRole;
   lastLogin?: any;
 }

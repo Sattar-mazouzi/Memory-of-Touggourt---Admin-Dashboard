@@ -62,7 +62,11 @@ import {
   BookOpen,
   Compass,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  LayoutDashboard,
+  Info,
+  ChevronRight,
+  Command
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES: CategoryMap = {
@@ -95,10 +99,12 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Deletion Modal State
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
@@ -109,6 +115,34 @@ const App: React.FC = () => {
 
   const categoryKeys = useMemo(() => Object.keys(categories), [categories]);
 
+  // Global searchable navigation items
+  const searchableTabs = useMemo(() => [
+    { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard size={14} /> },
+    { id: 'places', label: t.places, icon: <MapPin size={14} /> },
+    { id: 'gallery', label: t.gallery, icon: <ImageIcon size={14} /> },
+    { id: 'aboutCity', label: t.aboutCity, icon: <Info size={14} /> },
+    { id: 'categories', label: t.categories, icon: <Layers size={14} /> },
+    { id: 'staff', label: t.staff, icon: <Users size={14} />, adminOnly: true },
+    { id: 'settings', label: t.settings, icon: <Settings size={14} /> },
+  ].filter(item => !item.adminOnly || user?.role === 'admin'), [t, user]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return { tabs: [], places: [] };
+    const q = searchQuery.toLowerCase();
+    
+    const matchedTabs = searchableTabs.filter(tab => 
+      tab.label.toLowerCase().includes(q)
+    );
+
+    const matchedPlaces = places.filter(p => 
+      (p.name?.[currentLang] || '').toLowerCase().includes(q) ||
+      (p.name?.en || '').toLowerCase().includes(q) ||
+      (p.name?.ar || '').toLowerCase().includes(q)
+    ).slice(0, 5);
+
+    return { tabs: matchedTabs, places: matchedPlaces };
+  }, [searchQuery, searchableTabs, places, currentLang]);
+
   useEffect(() => {
     document.dir = isRtl ? 'rtl' : 'ltr';
     localStorage.setItem('admin_lang', currentLang);
@@ -118,6 +152,9 @@ const App: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -362,13 +399,78 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="relative group">
-              <Search className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-2.5 text-slate-400`} size={18} />
+            <div className="relative group" ref={searchContainerRef}>
+              <Search className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-3 text-slate-400 group-focus-within:text-orange-500 transition-colors`} size={18} />
               <input 
-                type="text" placeholder={t.searchPlaceholder}
-                className={`${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-white border border-transparent focus:border-orange-200 rounded-full text-sm outline-none shadow-sm w-64 transition-all`}
-                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                type="text" 
+                placeholder={isRtl ? 'ابحث عن إعدادات أو أماكن...' : 'Search settings or places...'}
+                className={`${isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-2.5 bg-white border border-transparent focus:border-orange-200 rounded-full text-sm outline-none shadow-sm w-72 transition-all font-medium`}
+                value={searchQuery} 
+                onChange={e => { setSearchQuery(e.target.value); setIsSearchFocused(true); }}
+                onFocus={() => setIsSearchFocused(true)}
               />
+              
+              {/* Enhanced Search Dropdown */}
+              {isSearchFocused && searchQuery.trim().length > 0 && (
+                <div className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200`}>
+                  <div className="p-2 max-h-[400px] overflow-y-auto scrollbar-hide">
+                    {/* Navigation Results */}
+                    {searchResults.tabs.length > 0 && (
+                      <div className="mb-2">
+                        <div className="px-3 py-1.5 flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
+                          <Command size={10} /> {isRtl ? 'التنقل' : 'Navigation'}
+                        </div>
+                        {searchResults.tabs.map(tab => (
+                          <button
+                            key={tab.id}
+                            onClick={() => { setActiveTab(tab.id); setSearchQuery(''); setIsSearchFocused(false); }}
+                            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-orange-50 rounded-xl group transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-1.5 bg-slate-50 text-slate-500 rounded-lg group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                                {tab.icon}
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 group-hover:text-orange-600">{tab.label}</span>
+                            </div>
+                            <ChevronRight size={14} className={`text-slate-300 ${isRtl ? 'rotate-180' : ''}`} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Places Results */}
+                    {searchResults.places.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
+                          <MapPin size={10} /> {isRtl ? 'سجلات الأماكن' : 'Place Records'}
+                        </div>
+                        {searchResults.places.map(place => (
+                          <button
+                            key={place.id}
+                            onClick={() => { setActiveTab('places'); setSearchQuery(place.name?.[currentLang] || ''); setIsSearchFocused(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl group transition-all text-start"
+                          >
+                            <div className="w-10 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                              <img src={place.imageUrl.cover} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-sm font-bold text-slate-700 truncate">{place.name?.[currentLang] || place.name?.en}</p>
+                              <p className="text-[10px] text-slate-400 font-medium truncate">{place.address?.[currentLang] || 'Touggourt'}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.tabs.length === 0 && searchResults.places.length === 0 && (
+                      <div className="py-8 text-center text-slate-400">
+                        <Search size={24} className="mx-auto mb-2 opacity-20" />
+                        <p className="text-xs font-bold">{t.noRecords}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="relative" ref={profileRef}>

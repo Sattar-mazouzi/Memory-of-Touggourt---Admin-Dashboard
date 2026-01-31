@@ -14,7 +14,9 @@ import {
   Map as MapIcon,
   Upload,
   Link as LinkIcon,
-  Maximize2
+  Maximize2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { AppLanguage, CategoryMap, LocalizedText, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
@@ -41,7 +43,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
 
   // GIS State
-  const [gisMaps, setGisMaps] = useState<Record<string, string>>({});
+  const [gisMaps, setGisMaps] = useState<any>({});
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,6 +145,15 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
     }
   };
 
+  const handleToggleGisVisibility = async () => {
+    const newVal = !gisMaps.show;
+    try {
+      await updateDoc(doc(db, "appConfig", "gisMaps"), { show: newVal });
+    } catch (err: any) {
+      alert(`Visibility update failed: ${err.message}`);
+    }
+  };
+
   const updateLocalizedName = (val: string) => {
     setNewName(prev => ({ ...prev, [editingLang]: val }));
   };
@@ -164,14 +175,29 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
         <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[100px] rounded-full"></div>
         <div className="relative z-10 flex flex-col lg:flex-row gap-10 items-center">
           <div className="flex-1 space-y-6">
-            <div className="flex items-center gap-4">
-               <div className="p-4 bg-orange-500 rounded-3xl shadow-lg shadow-orange-500/20">
-                  <MapIcon size={32} />
-               </div>
-               <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight">{t.mainMapSettings}</h3>
-                  <p className="text-slate-400 text-sm font-medium">{t.mainMapDesc}</p>
-               </div>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-4">
+                 <div className="p-4 bg-orange-500 rounded-3xl shadow-lg shadow-orange-500/20">
+                    <MapIcon size={32} />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black uppercase tracking-tight">{t.mainMapSettings}</h3>
+                    <p className="text-slate-400 text-sm font-medium">{t.mainMapDesc}</p>
+                 </div>
+              </div>
+
+              {/* GIS Visibility Toggle */}
+              <button 
+                onClick={handleToggleGisVisibility}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                  gisMaps.show 
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                    : 'bg-white/10 text-slate-400 hover:bg-white/20'
+                }`}
+              >
+                {gisMaps.show ? <Eye size={14} /> : <EyeOff size={14} />}
+                {isRtl ? (gisMaps.show ? 'ظاهر في التطبيق' : 'مخفي في التطبيق') : (gisMaps.show ? 'Visible in App' : 'Hidden in App')}
+              </button>
             </div>
 
             <div className="space-y-4 max-w-xl">

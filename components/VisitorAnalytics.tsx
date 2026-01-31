@@ -196,44 +196,46 @@ const VisitorAnalytics: React.FC<VisitorAnalyticsProps> = ({ currentLang }) => {
             <button onClick={fetchStats} className="px-6 py-2 bg-slate-100 rounded-xl text-xs text-orange-500 font-black uppercase hover:bg-slate-200 transition-colors">Retry</button>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#94A3B8', fontSize: 9, fontWeight: 700}} 
-                dy={10}
-                interval={range === '30d' ? 4 : 0}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} 
-              />
-              <Tooltip 
-                cursor={{fill: '#F8FAFC', radius: 12}} 
-                content={<CustomTooltip />}
-              />
-              <Bar 
-                dataKey="visits" 
-                fill="#F97316" 
-                radius={[8, 8, 0, 0]} 
-                barSize={range === '7d' ? 45 : range === '30d' ? 12 : 30}
-                minPointSize={5}
-                animationDuration={1000}
-              >
-                {data.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.visits > 0 ? '#F97316' : '#E2E8F0'} 
-                    fillOpacity={entry.visits > 0 ? 1 : 0.5}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full h-full">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94A3B8', fontSize: 9, fontWeight: 700}} 
+                  dy={10}
+                  interval={range === '30d' ? 4 : 0}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} 
+                />
+                <Tooltip 
+                  cursor={{fill: '#F8FAFC', radius: 12}} 
+                  content={<CustomTooltip />}
+                />
+                <Bar 
+                  dataKey="visits" 
+                  fill="#F97316" 
+                  radius={[8, 8, 0, 0]} 
+                  barSize={range === '7d' ? 45 : range === '30d' ? 12 : 30}
+                  minPointSize={5}
+                  animationDuration={1000}
+                >
+                  {data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.visits > 0 ? '#F97316' : '#E2E8F0'} 
+                      fillOpacity={entry.visits > 0 ? 1 : 0.5}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
 

@@ -432,8 +432,25 @@ const App: React.FC = () => {
 
               <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 flex flex-col">
                 <h3 className="font-black text-slate-800 text-lg uppercase mb-8 flex items-center gap-2"><Layers className="text-orange-500" size={20} />{t.categories}</h3>
-                <div className="h-56 w-full relative mb-8">
-                  <ResponsiveContainer><PieChart><Pie data={categoryData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={8} dataKey="value">{categoryData.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} stroke="transparent" />))}</Pie><Tooltip /></PieChart></ResponsiveContainer>
+                <div className="h-64 w-full relative mb-8">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie 
+                        data={categoryData} 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius={65} 
+                        outerRadius={85} 
+                        paddingAngle={8} 
+                        dataKey="value"
+                      >
+                        {categoryData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} stroke="transparent" />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-center">
                     <div><p className="text-3xl font-black text-slate-800">{places.length}</p><p className="text-[8px] text-slate-400 font-black uppercase">{t.totalPlaces}</p></div>
                   </div>

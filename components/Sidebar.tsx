@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   LayoutDashboard, 
   MapPin, 
@@ -8,9 +8,10 @@ import {
   LogOut,
   Users,
   Info,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Palette
 } from 'lucide-react';
-import { signOut, auth } from '../services/firebaseService';
+import { signOut, auth, db, doc, onSnapshot } from '../services/firebaseService';
 import { AppLanguage, UserRole } from '../types';
 import { translations } from '../translations';
 
@@ -24,6 +25,16 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab, userRole }) => {
   const t = translations[currentLang];
   const isRtl = currentLang === 'ar';
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "appConfig", "logo"), (snapshot) => {
+      if (snapshot.exists()) {
+        setLogoUrl(snapshot.data().mainLogo || null);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const navItems = [
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard size={20} /> },
@@ -47,15 +58,24 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab,
 
   return (
     <div className={`w-64 h-screen bg-white border-${isRtl ? 'l' : 'r'} border-slate-100 flex flex-col fixed ${isRtl ? 'right-0' : 'left-0'} top-0 z-30 transition-all duration-300`}>
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-200">
-          T
+      <button 
+        onClick={() => setActiveTab('branding')}
+        className="p-6 flex items-center gap-3 group text-start transition-all hover:bg-slate-50 border-b border-slate-50"
+      >
+        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-orange-200 group-hover:scale-110 transition-transform">
+          {logoUrl ? (
+            <img src={logoUrl} className="w-full h-full object-cover" alt="App Logo" />
+          ) : (
+            <span className="text-white font-bold text-xl">T</span>
+          )}
         </div>
-        <div>
-          <h1 className="font-bold text-slate-800 leading-tight">{t.appName}</h1>
-          <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{t.adminPortal}</p>
+        <div className="flex-1 overflow-hidden">
+          <h1 className="font-bold text-slate-800 leading-tight group-hover:text-orange-500 transition-colors truncate">{t.appName}</h1>
+          <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase flex items-center gap-1">
+            {t.adminPortal} <Palette size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+          </p>
         </div>
-      </div>
+      </button>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
         {filteredItems.map((item) => (

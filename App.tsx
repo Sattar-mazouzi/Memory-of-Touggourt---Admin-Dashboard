@@ -11,6 +11,7 @@ import GalleryManager from './components/GalleryManager';
 import ConfirmModal from './components/ConfirmModal';
 import VisitorAnalytics from './components/VisitorAnalytics';
 import ProfileEditor from './components/ProfileEditor';
+import BrandingManager from './components/BrandingManager';
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
@@ -124,7 +125,8 @@ const App: React.FC = () => {
     { id: 'categories', label: t.categories, icon: <Layers size={14} /> },
     { id: 'staff', label: t.staff, icon: <Users size={14} />, adminOnly: true },
     { id: 'settings', label: t.settings, icon: <Settings size={14} /> },
-  ].filter(item => !item.adminOnly || user?.role === 'admin'), [t, user]);
+    { id: 'branding', label: t.appBranding, icon: <Layout size={14} />, hidden: true },
+  ].filter(item => (!item.adminOnly || user?.role === 'admin') && !item.hidden), [t, user]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return { tabs: [], places: [] };
@@ -728,6 +730,7 @@ const App: React.FC = () => {
             onUpdate={(updates) => setUser(prev => prev ? ({ ...prev, ...updates }) : null)} 
           />
         )}
+        {activeTab === 'branding' && <BrandingManager currentLang={currentLang} />}
       </main>
 
       <ConfirmModal 

@@ -130,7 +130,7 @@ export const translations = {
     mostFavorited: "الأكثر تفضيلاً",
     favorites: "التفضيلات",
     popularPlaces: "الأماكن الأكثر شعبية",
-    topRated: "الأعلى تقييماً",
+    topRated: "الأعلى تقييمًا",
     reviews: "مراجعة",
     allCategories: "كل الفئات",
     cityReads: "قراءات دليل المدينة",
@@ -147,7 +147,13 @@ export const translations = {
     galleryDesc: "وصف العنصر",
     galleryImages: "صور المعرض",
     galleryVideos: "فيديوهات المعرض",
-    totalGalleryItems: "إجمالي عناصر المعرض"
+    totalGalleryItems: "إجمالي عناصر المعرض",
+
+    // App Branding
+    appBranding: "هوية التطبيق",
+    appLogo: "شعار التطبيق",
+    uploadLogo: "رفع الشعار الجديد",
+    brandingDesc: "تخصيص الهوية البصرية للتطبيق، بما في ذلك الشعار الرئيسي."
   },
   en: {
     appName: "Memory of Touggourt",
@@ -294,7 +300,13 @@ export const translations = {
     galleryDesc: "Item Description",
     galleryImages: "Gallery Images",
     galleryVideos: "Gallery Videos",
-    totalGalleryItems: "Total Gallery Items"
+    totalGalleryItems: "Total Gallery Items",
+
+    // App Branding
+    appBranding: "App Branding",
+    appLogo: "App Logo",
+    uploadLogo: "Upload New Logo",
+    brandingDesc: "Customize your app's visual identity, including the main logo."
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -441,6 +453,12 @@ export const translations = {
     galleryDesc: "Description de l'Élément",
     galleryImages: "Images de la Galerie",
     galleryVideos: "Vidéos de la Galerie",
-    totalGalleryItems: "Total des Éléments de Galerie"
+    totalGalleryItems: "Total des Éléments de Galerie",
+
+    // App Branding
+    appBranding: "Identité de l'App",
+    appLogo: "Logo de l'App",
+    uploadLogo: "Charger un Nouveau Logo",
+    brandingDesc: "Personnalisez l'identité visuelle de votre application, y compris le logo principal."
   }
 };

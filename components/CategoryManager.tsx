@@ -16,7 +16,8 @@ import {
   Link as LinkIcon,
   Maximize2,
   Eye,
-  EyeOff
+  EyeOff,
+  Image as ImageIcon
 } from 'lucide-react';
 import { AppLanguage, CategoryMap, LocalizedText, normalizeCategoryKey } from '../types';
 import { translations } from '../translations';
@@ -51,12 +52,16 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
   const [keyToConfirmDelete, setKeyToConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "appConfig", "gisMaps"), (snapshot) => {
+    // Listen to GIS Maps
+    const unsubGis = onSnapshot(doc(db, "appConfig", "gisMaps"), (snapshot) => {
       if (snapshot.exists()) {
         setGisMaps(snapshot.data());
       }
     });
-    return () => unsub();
+
+    return () => {
+      unsubGis();
+    };
   }, []);
 
   const handleSaveCategory = async (e: React.FormEvent) => {
@@ -125,7 +130,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
     }
   };
 
-  const handleMapUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadingField) return;
 
@@ -138,7 +143,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
         [fieldKey]: url
       });
     } catch (err: any) {
-      alert(`Map Upload Failed: ${err.message}`);
+      alert(`Upload Failed: ${err.message}`);
     } finally {
       setUploadingField(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -166,8 +171,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ currentLang, categori
         type="file" 
         ref={fileInputRef} 
         className="hidden" 
-        accept="image/png,image/jpeg" 
-        onChange={handleMapUpload} 
+        accept="image/png,image/jpeg,image/webp" 
+        onChange={handleImageUpload} 
       />
 
       {/* 1. GIS Main Map Settings Section */}

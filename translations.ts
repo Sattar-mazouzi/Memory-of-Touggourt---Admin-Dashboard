@@ -173,7 +173,8 @@ export const translations = {
     appOwner: "مالك التطبيق",
     ownerBio: "نبذة عن المالك",
     contactEmail: "بريد التواصل",
-    contactPhone: "هاتف التواصل"
+    contactPhone: "هاتف التواصل",
+    threeDImage: "رؤية ثلاثية الأبعاد (اختياري)"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -346,7 +347,8 @@ export const translations = {
     appOwner: "App Owner",
     ownerBio: "Owner Biography",
     contactEmail: "Contact Email",
-    contactPhone: "Contact Phone"
+    contactPhone: "Contact Phone",
+    threeDImage: "3D Visualization (Optional)"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -364,7 +366,7 @@ export const translations = {
     email: "Adresse E-mail",
     password: "Mot de passe",
     rememberMe: "Se souvenir de moi",
-    forgotPassword: "Mot de passe oublié ?",
+    forgotPassword: "Porte-monnaie oublié ?",
     signIn: "Se connecter",
     accessRestricted: "Accès restreint au personnel autorisé de la ville uniquement.",
     searchPlaceholder: "Rechercher par nom, adresse ou personnel...",
@@ -519,6 +521,7 @@ export const translations = {
     appOwner: "Propriétaire de l'App",
     ownerBio: "Biographie du Propriétaire",
     contactEmail: "E-mail de Contact",
-    contactPhone: "Téléphone de Contact"
+    contactPhone: "Téléphone de Contact",
+    threeDImage: "Visualisation 3D (Optionnel)"
   }
 };

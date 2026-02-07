@@ -69,6 +69,7 @@ export interface PlaceImages {
   img3: string;
   img4: string;
   img5: string;
+  '3d_img'?: string;
 }
 
 export interface PlaceVideoUrls {

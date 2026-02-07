@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube } from 'lucide-react';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube, View } from 'lucide-react';
 import { Place, LocalizedText, AppLanguage, PlaceImages, PlaceVideoUrls, normalizeCategoryKey, CategoryMap } from '../types';
 import { translations } from '../translations';
 import { uploadImage } from '../services/cloudinaryService';
@@ -33,7 +33,8 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
         img2: '',
         img3: '',
         img4: '',
-        img5: ''
+        img5: '',
+        '3d_img': ''
       },
       videoUrls: {
         video1: '',
@@ -137,13 +138,14 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
     onSave(formData);
   };
 
-  const imageSlots: { key: keyof PlaceImages; label: string }[] = [
+  const imageSlots: { key: keyof PlaceImages; label: string; icon?: any }[] = [
     { key: 'cover', label: t.coverImage },
     { key: 'img1', label: `${t.image} 1` },
     { key: 'img2', label: `${t.image} 2` },
     { key: 'img3', label: `${t.image} 3` },
     { key: 'img4', label: `${t.image} 4` },
     { key: 'img5', label: `${t.image} 5` },
+    { key: '3d_img', label: t.threeDImage, icon: View },
   ];
 
   const videoSlots: { key: keyof PlaceVideoUrls; label: string }[] = [
@@ -309,7 +311,10 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {imageSlots.map((slot) => (
                 <div key={slot.key} className="space-y-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{slot.label}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    {slot.icon && <slot.icon size={10} className="text-orange-500" />}
+                    {slot.label}
+                  </p>
                   <div className={`relative ${slot.key === 'cover' ? 'aspect-video' : 'aspect-square'} rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 group shadow-sm`}>
                     {formData.imageUrl?.[slot.key] ? (
                       <img 
@@ -319,7 +324,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ImageIcon size={slot.key === 'cover' ? 40 : 24} />
+                        {slot.icon ? <slot.icon size={slot.key === 'cover' ? 40 : 24} /> : <ImageIcon size={slot.key === 'cover' ? 40 : 24} />}
                       </div>
                     )}
                     

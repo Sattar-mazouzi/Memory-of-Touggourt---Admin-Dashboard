@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit2, Trash2, Star, MapPin, Heart } from 'lucide-react';
+import { Edit2, Trash2, Star, MapPin, Heart, View } from 'lucide-react';
 import { Place, AppLanguage, CategoryMap } from '../types';
 import { translations } from '../translations';
 
@@ -24,6 +24,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
   const categoryLabel = categories?.[place.category]?.[currentLang] || place.category;
   
   const displayImage = place.imageUrl?.cover || 'https://images.unsplash.com/photo-1548013146-72479768bada?w=800';
+  const has3D = !!place.imageUrl?.['3d_img'];
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
@@ -50,6 +51,12 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
               {place.favoritesCount || 0}
             </div>
           </div>
+          {has3D && (
+            <div className="bg-slate-900/80 backdrop-blur text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg w-fit border border-white/20">
+              <View size={12} className="text-orange-400" />
+              3D
+            </div>
+          )}
         </div>
         <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} flex gap-2`}>
           <button 

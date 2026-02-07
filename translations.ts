@@ -10,7 +10,7 @@ export const translations = {
     aboutCity: "حول المدينة",
     categories: "التصنيفات",
     gallery: "المعرض",
-    settings: "الإعدادات والملف الشخصي",
+    settings: "الأعدادات والملف الشخصي",
     signOut: "تسجيل الخروج",
     welcomeBack: "مرحباً بعودتك",
     welcomeAdmin: "أهلاً بك مجدداً،",
@@ -169,7 +169,11 @@ export const translations = {
     phone2: "رقم الهاتف 2",
     facebookPage: "صفحة فيسبوك",
     appDescription: "وصف التطبيق",
-    appInfoSaved: "تم حفظ معلومات التطبيق بنجاح"
+    appInfoSaved: "تم حفظ معلومات التطبيق بنجاح",
+    appOwner: "مالك التطبيق",
+    ownerBio: "نبذة عن المالك",
+    contactEmail: "بريد التواصل",
+    contactPhone: "هاتف التواصل"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -338,7 +342,11 @@ export const translations = {
     phone2: "Phone Number 2",
     facebookPage: "Facebook Page",
     appDescription: "App Description",
-    appInfoSaved: "App information saved successfully"
+    appInfoSaved: "App information saved successfully",
+    appOwner: "App Owner",
+    ownerBio: "Owner Biography",
+    contactEmail: "Contact Email",
+    contactPhone: "Contact Phone"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -497,7 +505,7 @@ export const translations = {
     appBranding: "Identité de l'App",
     appLogo: "Logo de l'App",
     uploadLogo: "Charger un Nouveau Logo",
-    brandingDesc: "Personnalisez l'identité visuelle de votre application, y compris le logo principal.",
+    brandingDesc: "Personnalisez l'identité visuelle de votre application, si incluant le logo principal.",
 
     // About App
     aboutApp: "À propos de l'App",
@@ -507,6 +515,10 @@ export const translations = {
     phone2: "Numéro de téléphone 2",
     facebookPage: "Page Facebook",
     appDescription: "Description de l'application",
-    appInfoSaved: "Informations de l'application enregistrées avec succès"
+    appInfoSaved: "Informations de l'application enregistrées avec succès",
+    appOwner: "Propriétaire de l'App",
+    ownerBio: "Biographie du Propriétaire",
+    contactEmail: "E-mail de Contact",
+    contactPhone: "Téléphone de Contact"
   }
 };

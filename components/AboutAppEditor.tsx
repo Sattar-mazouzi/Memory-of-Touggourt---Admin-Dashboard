@@ -11,6 +11,7 @@ import {
   CheckCircle2, 
   Globe, 
   MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
 import { db, doc, onSnapshot, setDoc } from '../services/firebaseService';
 import { AppLanguage, LocalizedText } from '../types';
@@ -24,8 +25,17 @@ interface Contributor {
   facebook: string;
 }
 
+interface Owner {
+  boi: LocalizedText; // Keeping 'boi' as per schema provided in prompt
+  contact: {
+    email: string;
+    phone: string;
+  };
+}
+
 interface AboutAppData {
   description: LocalizedText;
+  owner: Owner;
   contributors: {
     contributor_1: Contributor;
     contributor_2: Contributor;
@@ -55,8 +65,14 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
     facebook: ''
   });
 
+  const initialOwner = (): Owner => ({
+    boi: { ar: '', en: '', fr: '' },
+    contact: { email: '', phone: '' }
+  });
+
   const [data, setData] = useState<AboutAppData>({
     description: { ar: '', en: '', fr: '' },
+    owner: initialOwner(),
     contributors: {
       contributor_1: initialContributor(),
       contributor_2: initialContributor(),
@@ -72,6 +88,10 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
         setData(prev => ({
           ...prev,
           description: firestoreData.description || prev.description,
+          owner: {
+            boi: { ...prev.owner.boi, ...(firestoreData.owner?.boi || {}) },
+            contact: { ...prev.owner.contact, ...(firestoreData.owner?.contact || {}) },
+          },
           contributors: {
             contributor_1: { ...prev.contributors.contributor_1, ...(firestoreData.contributors?.contributor_1 || {}) },
             contributor_2: { ...prev.contributors.contributor_2, ...(firestoreData.contributors?.contributor_2 || {}) },
@@ -102,6 +122,26 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
     setData(prev => ({
       ...prev,
       description: { ...prev.description, [editingLang]: val }
+    }));
+  };
+
+  const updateOwnerBio = (val: string) => {
+    setData(prev => ({
+      ...prev,
+      owner: {
+        ...prev.owner,
+        boi: { ...prev.owner.boi, [editingLang]: val }
+      }
+    }));
+  };
+
+  const updateOwnerContact = (field: 'email' | 'phone', val: string) => {
+    setData(prev => ({
+      ...prev,
+      owner: {
+        ...prev.owner,
+        contact: { ...prev.owner.contact, [field]: val }
+      }
     }));
   };
 
@@ -199,12 +239,69 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
 
         <textarea 
           dir={editingLang === 'ar' ? 'rtl' : 'ltr'}
-          rows={8}
+          rows={6}
           placeholder="Enter app description (5-10 sentences)..."
           className="w-full bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-3xl p-8 text-slate-700 leading-relaxed font-medium transition-all outline-none resize-none"
           value={data.description[editingLang] || ''}
           onChange={e => updateDesc(e.target.value)}
         />
+      </div>
+
+      {/* App Owner Section */}
+      <div className="bg-white rounded-[40px] p-10 shadow-sm border border-slate-100 space-y-8">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-slate-900 text-white rounded-2xl">
+            <ShieldCheck size={24} />
+          </div>
+          <h4 className="text-xl font-black text-slate-800 uppercase tracking-tight">{t.appOwner}</h4>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+          <div className="xl:col-span-7 space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <Globe size={16} className="text-orange-500" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.ownerBio} ({editingLang.toUpperCase()})</label>
+            </div>
+            <textarea 
+              dir={editingLang === 'ar' ? 'rtl' : 'ltr'}
+              rows={5}
+              placeholder="About the app owner..."
+              className="w-full bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-3xl p-6 text-slate-700 leading-relaxed font-medium transition-all outline-none resize-none"
+              value={data.owner.boi[editingLang] || ''}
+              onChange={e => updateOwnerBio(e.target.value)}
+            />
+          </div>
+
+          <div className="xl:col-span-5 space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.contactEmail}</label>
+              <div className="relative group/input">
+                <Mail className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-orange-500 transition-colors`} size={18} />
+                <input 
+                  type="email"
+                  placeholder="owner@example.com"
+                  className={`w-full ${isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-2xl outline-none font-bold text-slate-700 transition-all`}
+                  value={data.owner.contact.email || ''}
+                  onChange={e => updateOwnerContact('email', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.contactPhone}</label>
+              <div className="relative group/input">
+                <Phone className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-orange-500 transition-colors`} size={18} />
+                <input 
+                  type="tel"
+                  placeholder="+213..."
+                  className={`w-full ${isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3.5 bg-slate-50 border-none focus:ring-2 ring-orange-100 rounded-2xl outline-none font-bold text-slate-700 transition-all`}
+                  value={data.owner.contact.phone || ''}
+                  onChange={e => updateOwnerContact('phone', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Contributors Grid */}

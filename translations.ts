@@ -96,6 +96,12 @@ export const translations = {
     heritageCulinary: "فن الطبخ",
     heritageFolklore: "الفلكلور",
     heritageFestivals: "المهرجانات",
+    heritageFolkloreTitle: "الفلكلور",
+    heritageClothingTitle: "اللباس التقليدي",
+    heritageIndustriesTitle: "الصناعات التقليدية",
+    heritageCulinaryTitle: "فن الطبخ",
+    heritageFestivalsTitle: "المهرجانات",
+    heritageGamesTitle: "الألعاب الشعبية",
     heritageGames: "الألعاب الشعبية",
     exploreGallery: "معرض الصور",
     architectureImage: "صور المعمار",
@@ -153,7 +159,17 @@ export const translations = {
     appBranding: "هوية التطبيق",
     appLogo: "شعار التطبيق",
     uploadLogo: "رفع الشعار الجديد",
-    brandingDesc: "تخصيص الهوية البصرية للتطبيق، بما في ذلك الشعار الرئيسي."
+    brandingDesc: "تخصيص الهوية البصرية للتطبيق، بما في ذلك الشعار الرئيسي.",
+
+    // About App
+    aboutApp: "حول التطبيق",
+    contributors: "المساهمون",
+    contributor: "المساهم",
+    phone1: "رقم الهاتف 1",
+    phone2: "رقم الهاتف 2",
+    facebookPage: "صفحة فيسبوك",
+    appDescription: "وصف التطبيق",
+    appInfoSaved: "تم حفظ معلومات التطبيق بنجاح"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -249,6 +265,12 @@ export const translations = {
     heritageCulinary: "Culinary Arts",
     heritageFolklore: "Folklore",
     heritageFestivals: "Festivals",
+    heritageFolkloreTitle: "Folklore",
+    heritageClothingTitle: "Traditional Clothing",
+    heritageIndustriesTitle: "Traditional Industries",
+    heritageCulinaryTitle: "Culinary Arts",
+    heritageFestivalsTitle: "Festivals",
+    heritageGamesTitle: "Traditional Games",
     heritageGames: "Traditional Games",
     exploreGallery: "Photo Gallery",
     architectureImage: "Architecture Image",
@@ -306,7 +328,17 @@ export const translations = {
     appBranding: "App Branding",
     appLogo: "App Logo",
     uploadLogo: "Upload New Logo",
-    brandingDesc: "Customize your app's visual identity, including the main logo."
+    brandingDesc: "Customize your app's visual identity, including the main logo.",
+
+    // About App
+    aboutApp: "About App",
+    contributors: "Contributors",
+    contributor: "Contributor",
+    phone1: "Phone Number 1",
+    phone2: "Phone Number 2",
+    facebookPage: "Facebook Page",
+    appDescription: "App Description",
+    appInfoSaved: "App information saved successfully"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -402,6 +434,12 @@ export const translations = {
     heritageCulinary: "Arts Culinaires",
     heritageFolklore: "Folklore",
     heritageFestivals: "Festivals",
+    heritageFolkloreTitle: "Folklore",
+    heritageClothingTitle: "Habit Traditionnel",
+    heritageIndustriesTitle: "Industries Traditionnelles",
+    heritageCulinaryTitle: "Arts Culinaires",
+    heritageFestivalsTitle: "Festivals",
+    heritageGamesTitle: "Jeux Traditionnels",
     heritageGames: "Jeux Traditionnels",
     exploreGallery: "Galerie Photos",
     architectureImage: "Architecture Image",
@@ -459,6 +497,16 @@ export const translations = {
     appBranding: "Identité de l'App",
     appLogo: "Logo de l'App",
     uploadLogo: "Charger un Nouveau Logo",
-    brandingDesc: "Personnalisez l'identité visuelle de votre application, y compris le logo principal."
+    brandingDesc: "Personnalisez l'identité visuelle de votre application, y compris le logo principal.",
+
+    // About App
+    aboutApp: "À propos de l'App",
+    contributors: "Contributeurs",
+    contributor: "Contributeur",
+    phone1: "Numéro de téléphone 1",
+    phone2: "Numéro de téléphone 2",
+    facebookPage: "Page Facebook",
+    appDescription: "Description de l'application",
+    appInfoSaved: "Informations de l'application enregistrées avec succès"
   }
 };

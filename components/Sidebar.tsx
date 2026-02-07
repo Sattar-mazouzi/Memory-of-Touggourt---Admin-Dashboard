@@ -9,7 +9,8 @@ import {
   Users,
   Info,
   Image as ImageIcon,
-  Palette
+  Palette,
+  Smartphone
 } from 'lucide-react';
 import { signOut, auth, db, doc, onSnapshot } from '../services/firebaseService';
 import { AppLanguage, UserRole } from '../types';
@@ -41,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang, activeTab, setActiveTab,
     { id: 'places', label: t.places, icon: <MapPin size={20} /> },
     { id: 'gallery', label: t.gallery, icon: <ImageIcon size={20} /> },
     { id: 'aboutCity', label: t.aboutCity, icon: <Info size={20} /> },
+    { id: 'aboutApp', label: t.aboutApp, icon: <Smartphone size={20} /> },
     { id: 'categories', label: t.categories, icon: <Layers size={20} /> },
     { id: 'staff', label: t.staff, icon: <Users size={20} />, adminOnly: true },
     { id: 'settings', label: t.settings, icon: <Settings size={20} /> },

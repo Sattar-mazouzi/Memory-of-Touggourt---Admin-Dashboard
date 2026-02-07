@@ -12,6 +12,7 @@ import ConfirmModal from './components/ConfirmModal';
 import VisitorAnalytics from './components/VisitorAnalytics';
 import ProfileEditor from './components/ProfileEditor';
 import BrandingManager from './components/BrandingManager';
+import AboutAppEditor from './components/AboutAppEditor';
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
 import { 
@@ -122,6 +123,7 @@ const App: React.FC = () => {
     { id: 'places', label: t.places, icon: <MapPin size={14} /> },
     { id: 'gallery', label: t.gallery, icon: <ImageIcon size={14} /> },
     { id: 'aboutCity', label: t.aboutCity, icon: <Info size={14} /> },
+    { id: 'aboutApp', label: t.aboutApp, icon: <Info size={14} /> },
     { id: 'categories', label: t.categories, icon: <Layers size={14} /> },
     { id: 'staff', label: t.staff, icon: <Users size={14} />, adminOnly: true },
     { id: 'settings', label: t.settings, icon: <Settings size={14} /> },
@@ -722,6 +724,7 @@ const App: React.FC = () => {
         {activeTab === 'gallery' && <GalleryManager currentLang={currentLang} />}
         {activeTab === 'categories' && <CategoryManager currentLang={currentLang} categories={categories} />}
         {activeTab === 'aboutCity' && <CityInfoEditor currentLang={currentLang} />}
+        {activeTab === 'aboutApp' && <AboutAppEditor currentLang={currentLang} />}
         {activeTab === 'staff' && user?.role === 'admin' && <StaffManager currentLang={currentLang} />}
         {activeTab === 'settings' && user && (
           <ProfileEditor 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit2, Trash2, Star, MapPin, Heart, View } from 'lucide-react';
+import { Edit2, Trash2, Star, MapPin, Heart, View, Hash } from 'lucide-react';
 import { Place, AppLanguage, CategoryMap } from '../types';
 import { translations } from '../translations';
 
@@ -34,12 +34,19 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
           alt={name} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
+        
+        {/* Order Badge */}
         <div className={`absolute top-4 ${isRtl ? 'right-4' : 'left-4'} flex flex-col gap-2`}>
+          <div className="bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-lg border border-white/20">
+            <Hash size={10} className="text-orange-500" /> {place.order || 1}
+          </div>
+          
           {place.featured && (
             <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg w-fit">
               <Star size={12} fill="white" /> {t.featured}
             </div>
           )}
+          
           <div className="flex gap-2">
             <div className="bg-white/90 backdrop-blur text-slate-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm w-fit border border-white/50">
               <Star size={12} className="text-orange-500" fill="currentColor" /> 
@@ -58,6 +65,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
             </div>
           )}
         </div>
+        
         <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} flex gap-2`}>
           <button 
             onClick={() => onEdit(place)}

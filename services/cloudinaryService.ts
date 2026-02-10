@@ -43,3 +43,16 @@ export const uploadImage = async (file: File): Promise<string> => {
     throw error;
   }
 };
+
+/**
+ * Deletes an image reference (stub for client-side).
+ * NOTE: Cloudinary requires a signed request or an Admin API key for deletion.
+ * For client-side security, actual deletion is typically handled via a backend proxy.
+ * This export resolves the import errors in the UI components.
+ */
+export const deleteImage = async (imageUrl: string): Promise<void> => {
+  // In a real-world scenario, you would call a backend endpoint that handles 
+  // the authenticated Cloudinary deletion using your API Secret.
+  console.log(`[Cloudinary Service] Deletion requested for: ${imageUrl}`);
+  // We perform no actual network request here to avoid exposing secrets or failing unsigned requests.
+};

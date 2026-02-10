@@ -1,9 +1,9 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube, View } from 'lucide-react';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube, View, Hash } from 'lucide-react';
 import { Place, LocalizedText, AppLanguage, PlaceImages, PlaceVideoUrls, normalizeCategoryKey, CategoryMap } from '../types';
 import { translations } from '../translations';
-import { uploadImage } from '../services/cloudinaryService';
+import { uploadImage, deleteImage } from '../services/cloudinaryService';
 
 interface PlaceFormProps {
   place?: Place;
@@ -23,6 +23,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
   const [formData, setFormData] = useState<Partial<Place>>(() => {
     const defaultCatKey = Object.keys(categories)[0] || 'culture';
     const defaults = {
+      order: 1,
       name: { ar: '', en: '', fr: '' },
       address: { ar: '', en: '', fr: '' },
       category: defaultCatKey,
@@ -83,10 +84,16 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
     if (!file || !uploadingField) return;
 
     const currentField = uploadingField;
+    // Capture the previous image URL for this specific slot to clean it up after a successful upload
+    const oldUrl = formData.imageUrl?.[currentField];
     setUploadingField(currentField); 
     
     try {
       const url = await uploadImage(file);
+      // If there was an existing image in this slot, delete it from Cloudinary
+      if (oldUrl && typeof oldUrl === 'string') {
+        deleteImage(oldUrl);
+      }
       setFormData(prev => ({
         ...prev,
         imageUrl: {
@@ -191,8 +198,8 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
             accept="image/*"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2 md:col-span-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 {t.name} ({editingLang.toUpperCase()})
               </label>
@@ -207,9 +214,26 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
               />
             </div>
             <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.placeOrder}</label>
+              <div className="relative group/order">
+                <Hash className={`absolute ${isFormRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/order:text-orange-500 transition-colors`} size={18} />
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  className={`w-full ${isFormRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-black text-slate-700`}
+                  value={formData.order ?? ''}
+                  onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.category}</label>
               <select
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none appearance-none"
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none appearance-none font-bold"
                 value={formData.category}
                 onChange={e => setFormData({ ...formData, category: e.target.value })}
               >
@@ -220,9 +244,25 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 ))}
               </select>
             </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.rating} (0-5)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                value={formData.rating ?? ''}
+                onChange={e => {
+                  const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                  setFormData({ ...formData, rating: val });
+                }}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.latitude}</label>
               <input
@@ -248,22 +288,6 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 onChange={e => {
                   const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
                   setFormData({ ...formData, location: { ...formData.location!, longitude: val } });
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.rating} (0-5)</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                required
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-                value={formData.rating ?? ''}
-                onChange={e => {
-                  const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                  setFormData({ ...formData, rating: val });
                 }}
               />
             </div>

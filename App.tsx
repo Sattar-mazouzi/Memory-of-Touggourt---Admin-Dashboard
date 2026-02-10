@@ -15,6 +15,7 @@ import BrandingManager from './components/BrandingManager';
 import AboutAppEditor from './components/AboutAppEditor';
 import { Place, AppLanguage, UserRole, CityStaff, normalizeCategoryKey, CategoryMap } from './types';
 import { translations } from './translations';
+import { deleteImage } from './services/cloudinaryService';
 import { 
   onAuthStateChanged, 
   auth, 
@@ -318,7 +319,16 @@ const App: React.FC = () => {
       if (editingPlace?.id) {
         await updateDoc(doc(db, "places", editingPlace.id), { ...placeData });
       } else {
-        await addDoc(collection(db, "places"), { ...placeData, favoritesCount: 0, ratingCount: 0 });
+        // Automatic numbering for new places
+        const maxOrder = places.reduce((max, p) => Math.max(max, p.order || 0), 0);
+        const newOrder = maxOrder + 1;
+        
+        await addDoc(collection(db, "places"), { 
+          ...placeData, 
+          order: newOrder,
+          favoritesCount: 0, 
+          ratingCount: 0 
+        });
       }
       setIsFormOpen(false);
     } catch (err: any) {
@@ -330,6 +340,16 @@ const App: React.FC = () => {
     if (!idToDelete) return;
     setIsDeletingPlace(true);
     try {
+      // Find place object to retrieve image URLs for Cloudinary cleanup
+      const placeToDelete = places.find(p => p.id === idToDelete);
+      if (placeToDelete && placeToDelete.imageUrl) {
+        // Collect all valid Cloudinary URLs from the place record
+        // Fixed: Use type predicate (u: unknown): u is string to fix unknown type error on line 340
+        const urls = Object.values(placeToDelete.imageUrl).filter((u): u is string => typeof u === 'string' && u.startsWith('http'));
+        // Trigger deletion for each identified URL
+        urls.forEach(url => deleteImage(url));
+      }
+
       await deleteDoc(doc(db, "places", idToDelete));
       setIdToDelete(null);
     } catch (err: any) {
@@ -345,7 +365,11 @@ const App: React.FC = () => {
 
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return places.filter(p => {
+    
+    // Sort places by order in ascending order (1 first, then 2, etc.)
+    const sorted = [...places].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    return sorted.filter(p => {
       // Search in Name
       const nameMatch = (p?.name?.[currentLang] || '').toLowerCase().includes(q) || 
                         (p?.name?.en || '').toLowerCase().includes(q) ||

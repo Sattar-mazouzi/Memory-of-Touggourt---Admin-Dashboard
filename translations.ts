@@ -174,7 +174,8 @@ export const translations = {
     ownerBio: "نبذة عن المالك",
     contactEmail: "بريد التواصل",
     contactPhone: "هاتف التواصل",
-    threeDImage: "رؤية ثلاثية الأبعاد (اختياري)"
+    threeDImage: "رؤية ثلاثية الأبعاد (اختياري)",
+    placeOrder: "ترتيب المكان"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -348,7 +349,8 @@ export const translations = {
     ownerBio: "Owner Biography",
     contactEmail: "Contact Email",
     contactPhone: "Contact Phone",
-    threeDImage: "3D Visualization (Optional)"
+    threeDImage: "3D Visualization (Optional)",
+    placeOrder: "Place Order"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -522,6 +524,7 @@ export const translations = {
     ownerBio: "Biographie du Propriétaire",
     contactEmail: "E-mail de Contact",
     contactPhone: "Téléphone de Contact",
-    threeDImage: "Visualisation 3D (Optionnel)"
+    threeDImage: "Visualisation 3D (Optionnel)",
+    placeOrder: "Ordre du lieu"
   }
 };

@@ -80,6 +80,7 @@ export interface PlaceVideoUrls {
 
 export interface Place {
   id: string;
+  order: number;
   name: LocalizedText;
   address: LocalizedText;
   category: string; 

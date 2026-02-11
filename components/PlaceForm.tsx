@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube, View, Hash } from 'lucide-react';
+import { X, Image as ImageIcon, Star, Upload, Link as LinkIcon, Loader2, Youtube, View, Hash, MapPin } from 'lucide-react';
 import { Place, LocalizedText, AppLanguage, PlaceImages, PlaceVideoUrls, normalizeCategoryKey, CategoryMap } from '../types';
 import { translations } from '../translations';
 import { uploadImage, deleteImage } from '../services/cloudinaryService';
@@ -12,6 +12,22 @@ interface PlaceFormProps {
   onSave: (place: Partial<Place>) => void;
   onClose: () => void;
 }
+
+const TOUGGOURT_CITIES = [
+  { id: 'benaceur', en: 'Benaceur', fr: 'Benaceur', ar: 'بن ناصر' },
+  { id: 'blidet_amor', en: 'Blidet Amor', fr: 'Blidet Amor', ar: 'بلدة عمر' },
+  { id: 'el_allia', en: 'El Allia', fr: 'El Allia', ar: 'العالية' },
+  { id: 'el_hadjira', en: 'El Hadjira', fr: 'El Hadjira', ar: 'الحجيرة' },
+  { id: 'megarine', en: 'Megarine', fr: 'Megarine', ar: 'مقارين' },
+  { id: 'mnaguer', en: "M'Naguer", fr: "M'Naguer", ar: 'المنقر' },
+  { id: 'nezla', en: 'Nezla', fr: 'Nezla', ar: 'النزلة' },
+  { id: 'sidi_slimane', en: 'Sidi Slimane', fr: 'Sidi Slimane', ar: 'سيدي سليمان' },
+  { id: 'taibet', en: 'Taibet', fr: 'Taibet', ar: 'الطيبات' },
+  { id: 'temacine', en: 'Temacine', fr: 'Temacine', ar: 'تماسين' },
+  { id: 'tebesbest', en: 'Tebesbest', fr: 'Tebesbest', ar: 'تبسبست' },
+  { id: 'touggourt', en: 'Touggourt', fr: 'Touggourt', ar: 'توقرت' },
+  { id: 'zaouia_el_abidia', en: 'Zaouia El Abidia', fr: 'Zaouia El Abidia', ar: 'الزاوية العابدية' }
+];
 
 const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, onSave, onClose }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
@@ -207,7 +223,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 type="text"
                 required
                 dir={isFormRtl ? 'rtl' : 'ltr'}
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-bold"
                 placeholder={editingLang === 'ar' ? 'مثلاً: المسجد العتيق' : 'e.g. Ancient Mosque'}
                 value={formData.name?.[editingLang] || ''}
                 onChange={e => updateLocalized('name', e.target.value)}
@@ -252,13 +268,47 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 min="0"
                 max="5"
                 required
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-bold"
                 value={formData.rating ?? ''}
                 onChange={e => {
                   const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
                   setFormData({ ...formData, rating: val });
                 }}
               />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {t.address}
+            </label>
+            <div className="relative group/address">
+              <MapPin className={`absolute ${isFormRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/address:text-orange-500 transition-colors`} size={18} />
+              <select
+                required
+                className={`w-full ${isFormRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-bold text-slate-700 appearance-none`}
+                value={TOUGGOURT_CITIES.find(c => c.en === formData.address?.en)?.en || ''}
+                onChange={e => {
+                  const selected = TOUGGOURT_CITIES.find(c => c.en === e.target.value);
+                  if (selected) {
+                    setFormData(prev => ({
+                      ...prev,
+                      address: {
+                        en: selected.en,
+                        fr: selected.fr,
+                        ar: selected.ar
+                      }
+                    }));
+                  }
+                }}
+              >
+                <option value="" disabled>{editingLang === 'ar' ? 'اختر المدينة/القرية...' : 'Select City/Village...'}</option>
+                {TOUGGOURT_CITIES.map(city => (
+                  <option key={city.id} value={city.en}>
+                    {editingLang === 'ar' ? city.ar : city.en}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -269,7 +319,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 type="number"
                 step="any"
                 required
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-bold"
                 value={formData.location?.latitude ?? ''}
                 onChange={e => {
                   const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
@@ -283,7 +333,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                 type="number"
                 step="any"
                 required
-                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
+                className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-bold"
                 value={formData.location?.longitude ?? ''}
                 onChange={e => {
                   const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
@@ -295,28 +345,13 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              {t.address} ({editingLang.toUpperCase()})
-            </label>
-            <input
-              type="text"
-              required
-              dir={isFormRtl ? 'rtl' : 'ltr'}
-              className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none"
-              placeholder="..."
-              value={formData.address?.[editingLang] || ''}
-              onChange={e => updateLocalized('address', e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               {t.description} ({editingLang.toUpperCase()})
             </label>
             <textarea
               required
               rows={4}
               dir={isFormRtl ? 'rtl' : 'ltr'}
-              className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none resize-none font-medium text-slate-700"
               placeholder="..."
               value={formData.description?.[editingLang] || ''}
               onChange={e => updateLocalized('description', e.target.value)}

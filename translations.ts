@@ -175,7 +175,8 @@ export const translations = {
     contactEmail: "بريد التواصل",
     contactPhone: "هاتف التواصل",
     threeDImage: "رؤية ثلاثية الأبعاد (اختياري)",
-    placeOrder: "ترتيب المكان"
+    placeOrder: "ترتيب المكان",
+    noDescriptionAvailable: "لا يوجد وصف متاح"
   },
   en: {
     appName: "Memory of Touggourt",
@@ -350,7 +351,8 @@ export const translations = {
     contactEmail: "Contact Email",
     contactPhone: "Contact Phone",
     threeDImage: "3D Visualization (Optional)",
-    placeOrder: "Place Order"
+    placeOrder: "Place Order",
+    noDescriptionAvailable: "No description available"
   },
   fr: {
     appName: "Mémoire de Touggourt",
@@ -525,6 +527,7 @@ export const translations = {
     contactEmail: "E-mail de Contact",
     contactPhone: "Téléphone de Contact",
     threeDImage: "Visualisation 3D (Optionnel)",
-    placeOrder: "Ordre du lieu"
+    placeOrder: "Ordre du lieu",
+    noDescriptionAvailable: "Aucune description disponible"
   }
 };

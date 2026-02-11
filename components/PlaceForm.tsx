@@ -25,9 +25,15 @@ const TOUGGOURT_CITIES = [
   { id: 'taibet', en: 'Taibet', fr: 'Taibet', ar: 'الطيبات' },
   { id: 'temacine', en: 'Temacine', fr: 'Temacine', ar: 'تماسين' },
   { id: 'tebesbest', en: 'Tebesbest', fr: 'Tebesbest', ar: 'تبسبست' },
-  { id: 'touggourt', en: 'Touggourt', fr: 'Touggourt', ar: 'توقرت' },
+  { id: 'touggourt', en: 'Touggourt', fr: 'Touggourt', ar: 'تقرت' },
   { id: 'zaouia_el_abidia', en: 'Zaouia El Abidia', fr: 'Zaouia El Abidia', ar: 'الزاوية العابدية' }
 ];
+
+const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
+  religion: 'https://res.cloudinary.com/djgn1nqtk/image/upload/v1770756272/m6ypu0sh0hyhklyfondv.png',
+  culture: 'https://res.cloudinary.com/djgn1nqtk/image/upload/v1770756967/fkx5otehqqyiqzdwo90r.png',
+  nature: 'https://res.cloudinary.com/djgn1nqtk/image/upload/v1770758076/etgxnrgxbt4snnwxzryh.png'
+};
 
 const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, onSave, onClose }) => {
   const [editingLang, setEditingLang] = useState<AppLanguage>(currentLang);
@@ -158,7 +164,34 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    const finalData = { ...formData };
+    
+    // 1. Handle default cover photo if empty based on category
+    if (!finalData.imageUrl?.cover && finalData.category) {
+      const catKey = finalData.category.toLowerCase();
+      const defaultImg = DEFAULT_CATEGORY_IMAGES[catKey];
+      if (defaultImg) {
+        finalData.imageUrl = {
+          ...(finalData.imageUrl as PlaceImages),
+          cover: defaultImg
+        };
+      }
+    }
+    
+    // 2. Handle optional description with "no description available" fallback
+    const langs: AppLanguage[] = ['ar', 'en', 'fr'];
+    const desc = { ...(finalData.description as LocalizedText) };
+    
+    langs.forEach(l => {
+      if (!desc[l] || desc[l].trim() === '') {
+        desc[l] = translations[l].noDescriptionAvailable;
+      }
+    });
+    
+    finalData.description = desc;
+    
+    onSave(finalData);
   };
 
   const imageSlots: { key: keyof PlaceImages; label: string; icon?: any }[] = [
@@ -348,11 +381,10 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
               {t.description} ({editingLang.toUpperCase()})
             </label>
             <textarea
-              required
               rows={4}
               dir={isFormRtl ? 'rtl' : 'ltr'}
               className="w-full px-4 py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none resize-none font-medium text-slate-700"
-              placeholder="..."
+              placeholder={editingLang === 'ar' ? 'اختياري...' : 'Optional...'}
               value={formData.description?.[editingLang] || ''}
               onChange={e => updateLocalized('description', e.target.value)}
             />

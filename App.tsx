@@ -323,9 +323,15 @@ const App: React.FC = () => {
         const maxOrder = places.reduce((max, p) => Math.max(max, p.order || 0), 0);
         const newOrder = maxOrder + 1;
         
+        // Automatic category numbering for new places
+        const categoryPlaces = places.filter(p => p.category === placeData.category);
+        const maxCatOrder = categoryPlaces.reduce((max, p) => Math.max(max, p.categoryOrder || 0), 0);
+        const newCatOrder = maxCatOrder + 1;
+        
         await addDoc(collection(db, "places"), { 
           ...placeData, 
           order: newOrder,
+          categoryOrder: newCatOrder,
           favoritesCount: 0, 
           ratingCount: 0 
         });
@@ -366,8 +372,13 @@ const App: React.FC = () => {
   const filteredPlaces = useMemo(() => {
     const q = searchQuery.toLowerCase();
     
-    // Sort places by order in ascending order (1 first, then 2, etc.)
-    const sorted = [...places].sort((a, b) => (a.order || 0) - (b.order || 0));
+    // Sort places: by categoryOrder if category is selected, otherwise by global order
+    const sorted = [...places].sort((a, b) => {
+      if (selectedCategory !== 'all') {
+        return (a.categoryOrder || 0) - (b.categoryOrder || 0);
+      }
+      return (a.order || 0) - (b.order || 0);
+    });
 
     return sorted.filter(p => {
       // Search in Name

@@ -176,6 +176,7 @@ export const translations = {
     contactPhone: "هاتف التواصل",
     threeDImage: "رؤية ثلاثية الأبعاد (اختياري)",
     placeOrder: "ترتيب المكان",
+    categoryOrder: "ترتيب الفئة",
     noDescriptionAvailable: "لا يوجد وصف متاح"
   },
   en: {
@@ -352,6 +353,7 @@ export const translations = {
     contactPhone: "Contact Phone",
     threeDImage: "3D Visualization (Optional)",
     placeOrder: "Place Order",
+    categoryOrder: "Category Order",
     noDescriptionAvailable: "No description available"
   },
   fr: {
@@ -528,6 +530,7 @@ export const translations = {
     contactPhone: "Téléphone de Contact",
     threeDImage: "Visualisation 3D (Optionnel)",
     placeOrder: "Ordre du lieu",
+    categoryOrder: "Ordre de catégorie",
     noDescriptionAvailable: "Aucune description disponible"
   }
 };

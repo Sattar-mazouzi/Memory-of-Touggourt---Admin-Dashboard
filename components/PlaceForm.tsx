@@ -46,6 +46,7 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
     const defaultCatKey = Object.keys(categories)[0] || 'culture';
     const defaults = {
       order: 1,
+      categoryOrder: 1,
       name: { ar: '', en: '', fr: '' },
       address: { ar: '', en: '', fr: '' },
       category: defaultCatKey,
@@ -273,6 +274,20 @@ const PlaceForm: React.FC<PlaceFormProps> = ({ place, currentLang, categories, o
                   className={`w-full ${isFormRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-black text-slate-700`}
                   value={formData.order ?? ''}
                   onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.categoryOrder}</label>
+              <div className="relative group/categoryOrder">
+                <Hash className={`absolute ${isFormRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/categoryOrder:text-orange-500 transition-colors`} size={18} />
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  className={`w-full ${isFormRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-slate-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-2xl transition-all outline-none font-black text-slate-700`}
+                  value={formData.categoryOrder ?? ''}
+                  onChange={e => setFormData({ ...formData, categoryOrder: parseInt(e.target.value) || 1 })}
                 />
               </div>
             </div>

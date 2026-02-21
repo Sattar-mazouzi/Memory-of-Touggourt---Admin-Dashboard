@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit2, Trash2, Star, MapPin, Heart, View, Hash } from 'lucide-react';
+import { Edit2, Trash2, Star, MapPin, Heart, View, Hash, Layers } from 'lucide-react';
 import { Place, AppLanguage, CategoryMap } from '../types';
 import { translations } from '../translations';
 
@@ -39,6 +39,10 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, currentLang, categories, o
         <div className={`absolute top-4 ${isRtl ? 'right-4' : 'left-4'} flex flex-col gap-2`}>
           <div className="bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-lg border border-white/20">
             <Hash size={10} className="text-orange-500" /> {place.order || 1}
+          </div>
+
+          <div className="bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-lg border border-white/20">
+            <Layers size={10} className="text-white" /> {place.categoryOrder || 1}
           </div>
           
           {place.featured && (

@@ -72,15 +72,6 @@ import {
   Command
 } from 'lucide-react';
 
-const DEFAULT_CATEGORIES: CategoryMap = {
-  religion: { ar: 'ديني', en: 'Religion', fr: 'Religieux' },
-  history: { ar: 'تاريخي', en: 'History', fr: 'Historique' },
-  culture: { ar: 'ثقافي', en: 'Culture', fr: 'Culturel' },
-  nature: { ar: 'طبيعي', en: 'Nature', fr: 'Naturel' },
-  hotels: { ar: 'فنادق', en: 'Hotels', fr: 'Hôtels' },
-  restaurants: { ar: 'مطاعم', en: 'Restaurants', fr: 'Restaurants' }
-};
-
 const App: React.FC = () => {
   const [currentLang, setCurrentLang] = useState<AppLanguage>(() => {
     return (localStorage.getItem('admin_lang') as AppLanguage) || 'ar';
@@ -92,7 +83,7 @@ const App: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [places, setPlaces] = useState<Place[]>([]);
-  const [categories, setCategories] = useState<CategoryMap>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<CategoryMap>({});
   const [staffList, setStaffList] = useState<CityStaff[]>([]);
   const [cityReads, setCityReads] = useState<number>(0);
   const [totalGlobalVisitors, setTotalGlobalVisitors] = useState<number>(0);
@@ -216,7 +207,7 @@ const App: React.FC = () => {
       setDataLoading(false);
       setPlaces([]);
       setStaffList([]);
-      setCategories(DEFAULT_CATEGORIES);
+      setCategories({});
       setCityReads(0);
       return;
     }
@@ -230,7 +221,7 @@ const App: React.FC = () => {
         if (snapshot.exists()) {
           setCategories(snapshot.data() as CategoryMap);
         } else {
-          setCategories(DEFAULT_CATEGORIES);
+          setCategories({});
         }
       }
     );

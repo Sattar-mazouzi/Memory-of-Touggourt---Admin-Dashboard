@@ -41,6 +41,7 @@ interface AboutAppData {
     contributor_2: Contributor;
     contributor_3: Contributor;
     contributor_4: Contributor;
+    contributor_5: Contributor;
   };
 }
 
@@ -77,7 +78,8 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
       contributor_1: initialContributor(),
       contributor_2: initialContributor(),
       contributor_3: initialContributor(),
-      contributor_4: initialContributor()
+      contributor_4: initialContributor(),
+      contributor_5: initialContributor()
     }
   });
 
@@ -97,6 +99,7 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
             contributor_2: { ...prev.contributors.contributor_2, ...(firestoreData.contributors?.contributor_2 || {}) },
             contributor_3: { ...prev.contributors.contributor_3, ...(firestoreData.contributors?.contributor_3 || {}) },
             contributor_4: { ...prev.contributors.contributor_4, ...(firestoreData.contributors?.contributor_4 || {}) },
+            contributor_5: { ...prev.contributors.contributor_5, ...(firestoreData.contributors?.contributor_5 || {}) },
           }
         }));
       }
@@ -312,7 +315,7 @@ const AboutAppEditor: React.FC<AboutAppEditorProps> = ({ currentLang }) => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {(['contributor_1', 'contributor_2', 'contributor_3', 'contributor_4'] as const).map((key, idx) => (
+          {(['contributor_1', 'contributor_2', 'contributor_3', 'contributor_4', 'contributor_5'] as const).map((key, idx) => (
             <div key={key} className="bg-white rounded-[40px] p-8 shadow-sm border border-slate-100 hover:border-orange-200 transition-all group">
               <div className="flex items-center justify-between mb-8">
                  <div className="flex items-center gap-4">
